@@ -1,0 +1,38 @@
+{
+  "name": "react-ts-parcel-temeplate-component",
+  "version": "1.0.0",
+  "description": "react-ts-parcel-cli的组件开发模版",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "files": [
+    "build",
+    "lib",
+    "example",
+    "src"
+  ],
+  "scripts": {
+    "start": "npx parcel example/index.html",
+    "build": "npx parcel build src/index.tsx -d lib --detailed-report",
+    "prepublish": "npm run build"
+  },
+  "dependencies": {
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3",
+    "react-router-dom": "^4.3.1"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.1",
+    "@types/node": "^10.12.18",
+    "@types/react": "^16.7.18",
+    "@types/react-dom": "^16.0.3",
+    "@types/react-router-dom": "^4.3.1",
+    "autoprefixer": "^9.4.3",
+    "babel-preset-react": "^6.24.1",
+    "parcel-bundler": "^1.0.3",
+    "postcss-modules": "^1.4.1",
+    "sass": "^1.15.2",
+    "tslint": "^5.12.0",
+    "tslint-config-airbnb": "^5.11.1",
+    "typescript": "^3.2.2"
+  }
+}
