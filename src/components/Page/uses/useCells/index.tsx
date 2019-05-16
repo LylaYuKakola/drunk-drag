@@ -1,12 +1,13 @@
 import * as React from 'react'
-import { CellPropsType } from '../../../../typings'
+import { StateOfReducerType } from '../../../../typings'
 import Cell from '../../../Cell'
 
 const { useMemo } = React
 
-export default function useCells(cells:CellPropsType[], selectedCells?:CellPropsType[]):any[] {
+export default function useCells(cellsState:StateOfReducerType):any[] {
   return useMemo(() => {
-    return cells.map((cell, index) => (
+    const { allCells, selectedCells } = cellsState
+    return allCells.map((cell, index) => (
       <Cell
         {...cell}
         isSelected={selectedCells && selectedCells.includes(cell)}
@@ -15,5 +16,5 @@ export default function useCells(cells:CellPropsType[], selectedCells?:CellProps
         key={index}
       />
     ))
-  }, [cells, selectedCells])
+  }, [cellsState])
 }

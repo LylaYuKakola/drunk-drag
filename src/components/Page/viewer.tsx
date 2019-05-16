@@ -47,7 +47,7 @@ export default function viewer({
       let allFlexBlockWeight = 0
 
       // 寻找 FlexBlock
-      newCells.forEach(cell => {
+      newCells.forEach((cell:CellPropsType) => {
         if (cell.type === 'FlexBlock') {
           flexBlocks.push(cell)
           allFlexBlockWeight += Number(cell.h)
@@ -55,7 +55,7 @@ export default function viewer({
       })
 
       // 计算每个cell 的变化
-      newCells.forEach(cell => {
+      newCells.forEach((cell:CellPropsType) => {
         const currentY = cell.y
         let valueToReset = 0
         flexBlocks.forEach((flexBlockCell: any) => {
@@ -72,7 +72,7 @@ export default function viewer({
       })
 
       // 计算每个FlexBlock的拉伸长度
-      flexBlocks.forEach(cell => {
+      flexBlocks.forEach((cell:CellPropsType) => {
         cell.h += ((cell.h / allFlexBlockWeight) * heightToResize)
         if (cell.h < 0) cell.h = 0
       })

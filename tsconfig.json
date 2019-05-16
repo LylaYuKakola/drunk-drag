@@ -35,19 +35,11 @@
   },
   "allowSyntheticDefaultImports": true,
   "rules": {
-    "arrow-parens": false,
-    "ter-arrow-parens": false,
     "semicolon": [
       true,
       "never"
     ],
-    "prefer-const": false,
-    "max-line-length": false,
-    "no-increment-decrement": false,
-    "no-parameter-reassignment": false,
-    "variable-name": false,
-    "import-name": false,
-    "prefer-array-literal": false,
-    "align": false
+    "align": false,
+    "max-line-length": false
   }
 }

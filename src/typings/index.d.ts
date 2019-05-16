@@ -20,13 +20,15 @@ export interface CellPropsType extends CommonElementPropsType {
   style?: any,
   isSelected?: boolean,
   index?: number,
+  id?: string, // 不指定则从内部获取
+  className?: string,
 }
 
 export interface PagePropsType {
   cells: CellPropsType[],
   height: number,
   width: number,
-  onChange?: Function,
+  onChange?: (cells:CellPropsType[]) => void,
   needToolbar?: boolean,
   id?: string,
 }
@@ -49,4 +51,20 @@ export interface GuideLinePropsType {
   pageW:number,
   pageH:number,
   visible:boolean,
+}
+
+export interface StateOfReducerType {
+  allCells: CellPropsType[],
+  selectedCells: CellPropsType[],
+}
+
+export interface ActionOfReducerType {
+  type: string,
+  payload?: {
+    key?: string,
+    keys?: string[],
+    data?: number[],
+    cell?: CellPropsType,
+    direction?: string,
+  }
 }
