@@ -2,6 +2,7 @@ import * as React from 'react'
 import { GuideLinePropsType, CellPropsType } from '../../../../typings'
 import { MIN_DISTANCE } from '../../../../util/constVariables'
 import './index.scss'
+import {useMemo} from "react";
 
 const { useState, useEffect } = React
 
@@ -115,7 +116,7 @@ function getAllGuideline(
 
   if (activeW === 0 && activeH === 0) return result
 
-  cells.forEach(cell => {
+  cells.forEach((cell:CellPropsType) => {
     const { x, y, w, h } = cell
 
     if (selectedCells.includes(cell)) return
@@ -145,16 +146,42 @@ function getAllGuideline(
   return result
 }
 
-export default function (props: GuideLinePropsType) {
+export default function ({
+  allCells, selectedCells, pageH, pageW, visible,
+}: GuideLinePropsType) {
+
+  const [
+    activeX,
+    activeY,
+    activeW,
+    activeH,
+  ] = (() => {
+    if (!selectedCells || !selectedCells.length) {
+      return [0, 0, 0, 0]
+    }
+
+    let minX = 999999999
+    let minY = 999999999
+    let maxX = 0
+    let maxY = 0
+    selectedCells.forEach((cell:CellPropsType) => {
+      if (cell.x < minX) minX = cell.x
+      if (cell.y < minY) minY = cell.y
+      if ((cell.x + cell.w) > maxX) maxX = cell.x + cell.w
+      if ((cell.y + cell.h) > maxY) maxY = cell.y + cell.h
+    })
+    return [minX, minY, maxX - minX, maxY - minY]
+  })()
+
   return getAllGuideline(
-    props.activeX,
-    props.activeY,
-    props.activeW,
-    props.activeH,
-    props.pageW,
-    props.pageH,
-    props.cells,
-    props.selectedCells,
-    props.visible,
+    activeX,
+    activeY,
+    activeW,
+    activeH,
+    pageW,
+    pageH,
+    allCells,
+    selectedCells,
+    visible,
   )
 }

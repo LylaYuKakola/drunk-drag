@@ -10,9 +10,9 @@ import useGuildLine from './uses/useGuildLine'
 import { guid } from '../../util/guid'
 import useCellsReducer from './uses/useCellsReducer'
 
-const { useState, useEffect, useRef, useMemo, useCallback } = React
+const { useState, useEffect, useRef, useCallback } = React
 
-export default function page({ width, height, cells, onChange, id }:PagePropsType) {
+export default function page({ width, height, cells, onChange, id, style }:PagePropsType) {
 
   // id常量
   const [pageId] = useState(id || `page-${guid()}`)
@@ -26,10 +26,6 @@ export default function page({ width, height, cells, onChange, id }:PagePropsTyp
   const directionToResize:{current: string} = useRef('') // 要执行resize的方向isDragging
   const cellIdUnderTouchStart:{current: string} = useRef() // 要进行移动的cell
   const panelRect:{current: any} = useRef({ left: 0, top: 0 })
-  // const activeX:{current: number} = useRef(0) // 进行拖拽部分的x
-  // const activeY:{current: number} = useRef(0) // 进行拖拽部分的y
-  // const activeW:{current: number} = useRef(0) // 进行拖拽部分的w
-  // const activeH:{current: number} = useRef(0) // 进行拖拽部分的h
 
   const [guideLinesVisible, setGuideLinesVisible] = useState(false) // 标线是否展示
   const [cellsState, dispatchCellsState] = useCellsReducer(cells.map((cell:CellPropsType) => {
@@ -167,39 +163,30 @@ export default function page({ width, height, cells, onChange, id }:PagePropsTyp
   const cellDoms = useCells(cellsState)
 
   // 标线的渲染
-  // const guideLines = useGuildLine({
-  //   activeX: activeX.current,
-  //   activeY: activeY.current,
-  //   activeW: activeW.current,
-  //   activeH: activeH.current,
-  //   cells: cellsInState,
-  //   selectedCells: selectedCells.current,
-  //   pageW: width,
-  //   pageH: height,
-  //   visible: guideLinesVisible,
-  // })
+  const guideLines = useGuildLine({
+    ...cellsState,
+    pageW: width,
+    pageH: height,
+    visible: guideLinesVisible,
+  })
 
   return (
     <div
       id={pageId}
       key={pageId}
-      className="page"
+      ref={pagePanel}
+      onMouseDown={handleDragStart}
+      onTouchStart={handleDragStart}
+      className="page-container"
+      style={{
+        ...style,
+        width,
+        height,
+        position: 'relative',
+      }}
     >
-      <div className="page-container">
-        <div
-          ref={pagePanel}
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
-          style={{
-            width,
-            height,
-            position: 'relative',
-          }}
-        >
-          { cellDoms }
-          {/*{ guideLines }*/}
-        </div>
-      </div>
+      { cellDoms }
+      { guideLines }
     </div>
   )
 }

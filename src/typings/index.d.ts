@@ -28,6 +28,7 @@ export interface PagePropsType {
   cells: CellPropsType[],
   height: number,
   width: number,
+  style: any,
   onChange?: (cells:CellPropsType[]) => void,
   needToolbar?: boolean,
   id?: string,
@@ -42,11 +43,7 @@ export interface ExportedPagePropsType {
 }
 
 export interface GuideLinePropsType {
-  activeX:number,
-  activeY:number,
-  activeW:number,
-  activeH:number,
-  cells: CellPropsType[],
+  allCells: CellPropsType[],
   selectedCells: CellPropsType[],
   pageW:number,
   pageH:number,

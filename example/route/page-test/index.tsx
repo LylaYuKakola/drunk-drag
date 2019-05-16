@@ -25,7 +25,7 @@ export default function () {
 
   return (
     <div className="page-test">
-      <div className="page-test-editor" style={{ width: pageWidth, height: pageHeight }}>
+      <div className="page-test-editor">
         <DDEditor
           id="Page001"
           cells={cells}
