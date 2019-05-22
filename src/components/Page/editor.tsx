@@ -1,94 +1,91 @@
+/**
+ * @desc 编辑面板
+ */
+
 import * as React from 'react'
 import './index.scss'
-import {
-  CellPropsType,
-  PagePropsType,
-  ActionOfReducerType,
-} from '../../typings'
+import { CellType, EditorType } from '../../typings'
 import useCells from './uses/useCells'
 import useGuildLine from './uses/useGuildLine'
-import { guid } from '../../util/guid'
+import useShortcutKey from './uses/useShortcutKey'
+import guid from '../../util/guid'
 import useCellsReducer from './uses/useCellsReducer'
+import useTouchedRelativePosition from './uses/useTouchedRelativePosition'
 
-const { useState, useEffect, useRef, useCallback } = React
+const { useState, useRef, useCallback, useLayoutEffect } = React
 
-export default function page({ width, height, cells, onChange, id, style }:PagePropsType) {
-
-  // id常量
-  const [pageId] = useState(id || `page-${guid()}`)
-
-  const pagePanel:{current: any} = useRef() // 拖拽面板的dom引用
-  const isActiveEditor:{current: boolean} = useRef(false) // 拖拽面板是否是active状态
-  const isDragging:{current: boolean} = useRef(false) // 是否在执行拖拽
-  const startX:{current: number} = useRef(0) // 拖拽开始的X轴位置
-  const startY:{current: number} = useRef(0) // 拖拽开始的Y轴位置
-  const cellIdToResize:{current: string} = useRef() // 要执行resize的cell
-  const directionToResize:{current: string} = useRef('') // 要执行resize的方向isDragging
-  const cellIdUnderTouchStart:{current: string} = useRef() // 要进行移动的cell
-  const panelRect:{current: any} = useRef({ left: 0, top: 0 })
-
-  const [guideLinesVisible, setGuideLinesVisible] = useState(false) // 标线是否展示
-  const [cellsState, dispatchCellsState] = useCellsReducer(cells.map((cell:CellPropsType) => {
-    cell.id = cell.id || `cell-${guid()}`
-    return cell
-  }), width, height)
-
-  useEffect(() => {
-    if (pagePanel.current) {
-      panelRect.current = pagePanel.current.getBoundingClientRect()
+type PositionType = [number, number]
+type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T
+const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPosition) => {
+  const [startX, startY] = touchedPosition
+  let index = allCells.length - 1
+  while (index >= 0) {
+    const cell = allCells[index]
+    const { x, y, h, w } = cell
+    if ((startX >= x) &&
+      (startX <= (x + w)) &&
+      (startY >= y) &&
+      (startY <= (y + h))
+    ) {
+      return cell
     }
-  }, [pagePanel.current])
+    index -= 1
+  }
+}
 
-  const getTouchRelativePosition = useCallback((event:any):[number, number] => {
-    if (event.type.startsWith('mouse') || (event.type === 'contextmenu')) {
-      return [event.clientX - panelRect.current.left, event.clientY - panelRect.current.top]
-    }
-    return [
-      event.touches[0].clientX - panelRect.current.left,
-      event.touches[0].clientY - panelRect.current.top,
-    ]
-  }, [panelRect.current])
+/**
+ * 拖拽编辑面板组件
+ * @param width 面板宽度
+ * @param height 面板高度
+ * @param cells 面板内容
+ * @param onChange 拖拽完成之后执行回调
+ * @param id 面板id
+ * @param style 面板扩展样式
+ */
+export default function editor({ width, height, cells, onChange, id, style }:EditorType) {
+
+  const [pageId] = useState(id || `page-${guid()}`) // id设置为常量
+
+  const panelRef = useRef<HTMLDivElement|null>(null)
+  const startPosition = useRef<PositionType>()
+  const resizeTag = useRef<string>('')
+
+  const [guideLinesVisible, setGuideLinesVisible] = useState<boolean>(false)
+  const [isActiveEditor, setIsActiveEditor] = useState<boolean>(false)
+  const [editorPanel, setEditorPanel] = useState<HTMLDivElement|null>(null)
+
+  const [cellsState, dispatchCellsState] = useCellsReducer(
+    cells.map((cell:CellType) => {
+      cell.id = cell.id || `cell-${guid()}`
+      return cell
+    }),
+  )
+
+  const getTouchRelativePosition = useTouchedRelativePosition(editorPanel)
 
   const handleDragStart = useCallback((event:any) => {
-    // event.stopPropagation()
     // event.nativeEvent.stopImmediatePropagation()
 
-      // 获取开始点击的位置
-    [startX.current, startY.current] = getTouchRelativePosition(event)
-    if (startX.current < 0 || startY.current < 0) return
-
-    isActiveEditor.current = true
+    startPosition.current = getTouchRelativePosition(event)
+    setIsActiveEditor(true)
 
     if (event!.target!.dataset!.tag) {
-      // 点击位置发生在页面元素的边框处，判断为resize操作
-      const [, direction, id] = event.target.dataset.tag.split('*')
-      cellIdToResize.current = id
-      directionToResize.current = direction
+      resizeTag.current = event.target.dataset.tag
     } else {
-      // 点击位置发生在页面上（编辑面板或者元素上）
-      cellsState.allCells.forEach((cell:CellPropsType) => {
-        const { x, y, h, w } = cell
-        if ((startX.current >= x) &&
-          (startX.current <= (x + w)) &&
-          (startY.current >= y) &&
-          (startY.current <= (y + h))
-        ) {
-          cellIdUnderTouchStart.current = cell.id
-        }
-      })
-
-      const actions:ActionOfReducerType[] = [{
-        type: 'clearSelected',
-      }]
-      if (cellIdUnderTouchStart.current) {
-        actions.push({
-          type: 'addSelected',
+      const allCells = cellsState.allCells
+      const currentCell = getCurrentTouchedCell(allCells, startPosition.current)
+      if (currentCell) {
+        dispatchCellsState([{
+          type: 'select',
           payload: {
-            key: cellIdUnderTouchStart.current,
+            keys: [currentCell.id],
           },
-        })
+        }])
+      } else {
+        dispatchCellsState([{
+          type: 'clearSelection',
+        }])
       }
-      dispatchCellsState(actions)
     }
 
     if (event.type.startsWith('mouse')) {
@@ -98,29 +95,34 @@ export default function page({ width, height, cells, onChange, id, style }:PageP
       document.addEventListener('touchmove', handleMove)
       document.addEventListener('touchend', handleDragEnd)
     }
-  }, [])
+  }, [cellsState])
 
-  const handleMove = useCallback(() => {
+  // drag move
+  const handleMove = useCallback((event:MouseEvent|TouchEvent) => {
     setGuideLinesVisible(true)
 
+    const [startX, startY] = startPosition.current
     const [moveX, moveY] = getTouchRelativePosition(event)
-    const [diffX, diffY] = [moveX - startX.current, moveY - startY.current]
+    const [diffX, diffY] = [moveX - startX, moveY - startY]
 
-    // 优化，增加距离校验，移动距离大于1px才算移动
     if ((Math.abs(diffX) <= 2) && (Math.abs(diffY) <= 2)) return
 
-    [startX.current, startY.current] = [moveX, moveY]
-    isDragging.current = true
+    startPosition.current = [moveX, moveY]
     document.body.style.userSelect = 'none' // 禁止页面的选中
 
-    if (cellIdToResize.current) {
+    if (resizeTag.current) {
       // 判断为resize操作
+      const [direction, id] = resizeTag.current.split('*')
       dispatchCellsState([{
+        type: 'select',
+        payload: {
+          keys: [id],
+        },
+      }, {
         type: 'resize',
         payload: {
-          key: cellIdToResize.current,
+          direction,
           data: [diffX, diffY],
-          direction: directionToResize.current,
         },
       }])
     } else {
@@ -134,8 +136,8 @@ export default function page({ width, height, cells, onChange, id, style }:PageP
     }
   }, [])
 
-  // handleDragEnd
-  const handleDragEnd = useCallback(() => {
+  // drag end
+  const handleDragEnd = useCallback((event:MouseEvent|TouchEvent) => {
     // 首先移除document上的事件
     if (event.type.startsWith('mouse')) {
       document.removeEventListener('mousemove', handleMove)
@@ -147,17 +149,12 @@ export default function page({ width, height, cells, onChange, id, style }:PageP
 
     // 重置状态变量
     document.body.style.userSelect = ''
-    isActiveEditor.current = false
-    startX.current = 0
-    startY.current = 0
-    isDragging.current = false
-    cellIdToResize.current = null
-    cellIdUnderTouchStart.current = ''
-    directionToResize.current = ''
+    startPosition.current = null
+    resizeTag.current = ''
     setTimeout(() => {
       setGuideLinesVisible(false)
     }, 200)
-  }, [])
+  }, [handleMove])
 
   // cell的渲染
   const cellDoms = useCells(cellsState)
@@ -170,11 +167,23 @@ export default function page({ width, height, cells, onChange, id, style }:PageP
     visible: guideLinesVisible,
   })
 
+  // side effect 快捷键
+  useShortcutKey({
+    isActive: isActiveEditor,
+    dispatch: dispatchCellsState,
+  })
+
+  useLayoutEffect(() => {
+    if (panelRef.current) {
+      setEditorPanel(panelRef.current)
+    }
+  }, [panelRef.current])
+
   return (
     <div
       id={pageId}
       key={pageId}
-      ref={pagePanel}
+      ref={panelRef}
       onMouseDown={handleDragStart}
       onTouchStart={handleDragStart}
       className="page-container"

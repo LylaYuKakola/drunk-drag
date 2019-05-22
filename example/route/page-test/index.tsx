@@ -1,12 +1,10 @@
 import * as React from 'react'
-import DD from '../../../src'
+import DD, { DrunkDragType } from '../../../src'
 import cells from '../../config'
 import './index.scss'
 
 const { useState, useCallback, useMemo } = React
-
-// 引入组件
-const { DDEditor, DDViewer } = DD
+const { Editor, Viewer }:DrunkDragType = DD
 
 export default function () {
 
@@ -26,11 +24,12 @@ export default function () {
   return (
     <div className="page-test">
       <div className="page-test-editor">
-        <DDEditor
+        <Editor
           id="Page001"
           cells={cells}
           width={pageWidth}
           height={pageHeight}
+          style={{ backgroundColor: '#ff8080' }}
         />
       </div>
       <div

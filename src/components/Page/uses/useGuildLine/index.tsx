@@ -1,10 +1,12 @@
+/**
+ * @desc 标线内容
+ * 1.
+ */
+
 import * as React from 'react'
-import { GuideLinePropsType, CellPropsType } from '../../../../typings'
+import { GuideLinePropsType, CellType } from '../../../../typings'
 import { MIN_DISTANCE } from '../../../../util/constVariables'
 import './index.scss'
-import {useMemo} from "react";
-
-const { useState, useEffect } = React
 
 // Y轴的标线
 function getYGuidelines(
@@ -95,8 +97,8 @@ function getAllGuideline(
   activeH:number,
   pageW:number,
   pageH:number,
-  cells:CellPropsType[],
-  selectedCells: CellPropsType[],
+  cells:CellType[],
+  selectedCells: CellType[],
   visible:boolean,
 ):any[] {
   /**
@@ -116,7 +118,7 @@ function getAllGuideline(
 
   if (activeW === 0 && activeH === 0) return result
 
-  cells.forEach((cell:CellPropsType) => {
+  cells.forEach((cell:CellType) => {
     const { x, y, w, h } = cell
 
     if (selectedCells.includes(cell)) return
@@ -164,7 +166,7 @@ export default function ({
     let minY = 999999999
     let maxX = 0
     let maxY = 0
-    selectedCells.forEach((cell:CellPropsType) => {
+    selectedCells.forEach((cell:CellType) => {
       if (cell.x < minX) minX = cell.x
       if (cell.y < minY) minY = cell.y
       if ((cell.x + cell.w) > maxX) maxX = cell.x + cell.w

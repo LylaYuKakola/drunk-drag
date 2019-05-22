@@ -1,15 +1,29 @@
+/** 面边中的元素组件 **/
+
 import * as React from 'react'
 import './index.scss'
 import Elements from '../Elements'
-import { CellPropsType } from '../../typings'
+import { CellType } from '../../typings'
 
 const { useMemo } = React
 
-export default function ({
-  w, h, x, y, type, style, contentProps, isSelected, isPurePage, id,
-}:CellPropsType) {
+interface CellStyleType {
+  top: number,
+  left: number,
+  width: number,
+  height: number,
+}
 
-  const content = useMemo(() => {
+/**
+ * 根据cell渲染内容
+ * @param cell 元素配置
+ */
+export default function (cell:CellType) {
+  const {
+    w, h, x, y, type, style, contentProps, isSelected, isPurePage, id,
+  } = cell
+
+  const content = useMemo<any|null>(() => {
     const component = Elements[type]
     return component({
       isPurePage,
@@ -17,11 +31,11 @@ export default function ({
     })
   }, [type, contentProps, isPurePage])
 
-  const cellStyle = useMemo(() => ({
-    top: y,
-    left: x,
-    width: w,
-    height: h,
+  const cellStyle = useMemo<CellStyleType>(() => ({
+    top: y || 0,
+    left: x || 0,
+    width: w || 0,
+    height: h || 0,
   }), [w, h, x, y])
 
   return (
@@ -38,50 +52,50 @@ export default function ({
         (isSelected && !isPurePage) && ([
           (
             <div
-              data-tag={`l*l*${id}`}
+              data-tag={`l*${id}`}
               className="cell-left-line"
               style={{ height: (h + 4), top: -2, left: -4 }}
             />
           ), (
             <div
-              data-tag={`l*r*${id}`}
+              data-tag={`r*${id}`}
               className="cell-right-line"
               style={{ height: (h + 4), top: -2, left: (w + 4) }}
             />
           ), (
             <div
-              data-tag={`l*t*${id}`}
+              data-tag={`t*${id}`}
               className="cell-top-line"
               style={{ width: (w + 4), top: -4, left: -2 }}
             />
           ), (
             <div
-              data-tag={`l*b*${id}`}
+              data-tag={`b*${id}`}
               className="cell-bottom-line"
               style={{ width: (w + 4), top: (h + 4), left: -2 }}
             />
           ), (
             <div
-              data-tag={`b*tl*${id}`}
+              data-tag={`tl*${id}`}
               className="cell-top-left-btn"
               style={{ top: -4, left: -4 }}
             />
           ),
           (
             <div
-              data-tag={`b*tr*${id}`}
+              data-tag={`tr*${id}`}
               className="cell-top-right-btn"
               style={{ top: -4, left: (w + 2) }}
             />
           ), (
             <div
-              data-tag={`b*bl*${id}`}
+              data-tag={`bl*${id}`}
               className="cell-bottom-left-btn"
               style={{ top: (h + 3), left: -4 }}
             />
           ), (
             <div
-              data-tag={`b*br*${id}`}
+              data-tag={`br*${id}`}
               className="cell-bottom-right-btn"
               style={{ top: (h + 2), left: (w + 2) }}
             />

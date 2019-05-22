@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { StateOfReducerType } from '../../../../typings'
 import Cell from '../../../Cell'
+import { CellsStateType } from '../../../../typings'
 
 const { useMemo } = React
 
-export default function useCells(cellsState:StateOfReducerType):any[] {
-  return useMemo(() => {
+export default function useCells(cellsState:CellsStateType):any[] {
+  return useMemo<any[]|null>(() => {
     const { allCells, selectedCells } = cellsState
     return allCells.map((cell, index) => (
       <Cell

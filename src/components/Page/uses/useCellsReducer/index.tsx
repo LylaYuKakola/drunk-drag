@@ -1,61 +1,66 @@
-import * as React from 'react'
-import { CellPropsType, StateOfReducerType, ActionOfReducerType } from '../../../../typings'
-import { guid } from '../../../../util/guid'
-import {
-  MIN_HEIGHT_OF_CELL,
-  MIN_WIDTH_OF_CELL,
-} from '../../../../util/constVariables'
+/**
+ * @desc cells的相关操作
+ */
 
-const { useState, useReducer, useCallback } = React
+import * as React from 'react'
+import { CellType, CellsStateType, ReducerActionType } from '../../../../typings'
+import guid  from '../../../../util/guid'
+
+const { useState, useReducer, useCallback, useRef } = React
 
 export default function useCellsReducer(
-  cells: CellPropsType[],
-  pageWidth: number,
-  pageHeight: number,
+  cells: CellType[],
 ) {
-  const initialState:StateOfReducerType = useState({
+  const initialState:CellsStateType = useState({
     allCells: cells,
     selectedCells: [],
   })[0] // 完全非受控
 
+  const revertStack = useRef<any[][]>([])
+
   const reducer = useCallback((
-    state:StateOfReducerType,
-    actions:ActionOfReducerType[],
-  ):StateOfReducerType  => {
+    state:CellsStateType,
+    actions:ReducerActionType[],
+  ):CellsStateType  => {
     let { allCells, selectedCells } = state
 
     actions.forEach((action: any) => {
       const { type, payload } = action
 
       switch (type) {
-        case 'addSelected':
+        case 'select':
           {
-            const { key, keys } = payload
-            const allKeys = [...new Set([key, ...(keys || [])])]
-            const newSelectedCells = allCells.filter((cell:CellPropsType) => {
-              return allKeys.includes(cell.id)
+            const { keys } = payload
+            if (!keys || !(keys instanceof Array) || !keys.length) break
+            selectedCells = allCells.filter((cell:CellType) => {
+              return keys.includes(cell.id)
             })
-            selectedCells = [...selectedCells, ...newSelectedCells]
             break
           }
-        case 'clearSelected':
+        case 'appendSelection':
+          {
+            const { keys } = payload
+            if (!keys || !(keys instanceof Array) || !keys.length) break
+            selectedCells = [...selectedCells, ...(allCells.filter((cell:CellType) => {
+              return keys.includes(cell.id)
+            }))]
+            break
+          }
+        case 'clearSelection':
           {
             selectedCells = []
             break
           }
         case 'resize':
           {
-            const key = payload.key
             const [resizeX, resizeY] = payload.data || [0, 0]
             const direction = payload.direction || ''
 
-            if (!key) break
             if (!resizeX && !resizeY) break
             if (!direction) break
+            if (!selectedCells.length) break
 
-            const currentCell = allCells.find((cell:CellPropsType) => {
-              return key === cell.id
-            })
+            const currentCell = selectedCells[0]
 
             // left
             if (direction.includes('l')) {
@@ -75,7 +80,6 @@ export default function useCellsReducer(
             if (direction.includes('b')) {
               currentCell.h += resizeY
             }
-            controlCellSize(currentCell, direction)
             selectedCells = [currentCell]
             break
           }
@@ -83,10 +87,9 @@ export default function useCellsReducer(
           {
             const [moveX, moveY] = payload.data || [0, 0]
             if (moveX || moveY) {
-              selectedCells.forEach((cell:CellPropsType) => {
+              selectedCells.forEach((cell:CellType) => {
                 cell.x += moveX
                 cell.y += moveY
-                controlCellPosition(cell)
               })
             }
             break
@@ -101,37 +104,17 @@ export default function useCellsReducer(
           }
         case 'delete':
           {
-            const { key, keys } = payload
-            const allKeys = [...new Set([key, ...(keys || [])])]
-            allCells = allCells.filter((cell:CellPropsType) => {
-              return allKeys.includes(cell.id)
+            allCells = allCells.filter((cell:CellType) => {
+              return !selectedCells.includes(cell)
             })
+            selectedCells = []
             break
           }
         case 'up':
           {
-            const { key } = payload
-            if (!key) break
-            const currentCellIndex = allCells.findIndex((cell:CellPropsType) => {
-              return key === cell.id
-            })
-            if (currentCellIndex < 0) {
-              console.warn('没找着')
-              break
-            }
-            if ((currentCellIndex + 1) >= allCells.length) {
-              console.warn('已经在最上边了')
-              break
-            }
-            [allCells[currentCellIndex + 1], allCells[currentCellIndex]] = [allCells[currentCellIndex], allCells[currentCellIndex + 1]]
-            break
-          }
-        case 'down':
-          {
-            const { key } = payload
-            if (!key) break
-            const currentCellIndex = allCells.findIndex((cell:CellPropsType) => {
-              return key === cell.id
+            if (!selectedCells.length) break
+            const currentCellIndex = allCells.findIndex((cell:CellType) => {
+              return cell === selectedCells[0]
             })
             if (currentCellIndex < 0) {
               console.warn('没找着')
@@ -141,9 +124,31 @@ export default function useCellsReducer(
               console.warn('已经在最下边了')
               break
             }
-            [allCells[currentCellIndex - 1], allCells[currentCellIndex]] = [allCells[currentCellIndex], allCells[currentCellIndex - 1]]
+            [allCells[currentCellIndex + 1], allCells[currentCellIndex]] =
+              [allCells[currentCellIndex], allCells[currentCellIndex + 1]]
             break
           }
+        case 'down':
+          {
+            if (!selectedCells.length) break
+            const currentCellIndex = allCells.findIndex((cell:CellType) => {
+              return cell === selectedCells[0]
+            })
+            if (currentCellIndex < 0) {
+              console.warn('没找着')
+              break
+            }
+            if ((currentCellIndex - 1) < 0) {
+              console.warn('已经在最下边了')
+              break
+            }
+            [allCells[currentCellIndex - 1], allCells[currentCellIndex]] =
+              [allCells[currentCellIndex], allCells[currentCellIndex - 1]]
+            break
+          }
+        case 'revert':
+          doRevert()
+          break
         default:
           console.warn('没有这个指令')
           break
@@ -152,33 +157,49 @@ export default function useCellsReducer(
     return { allCells, selectedCells }
   }, [])
 
-  const controlCellSize = useCallback((cell:CellPropsType, direction:string) => {
-    let { x, y, w, h } = cell
-    if (x < 0) { w = w + x; x = 0 }
-    if ((x + w) > pageWidth) { w = pageWidth - x }
-    if (y < 0) { h = h + y; y = 0 }
-    if ((y + h) > pageHeight) { h = pageHeight - y }
-    if (w < MIN_WIDTH_OF_CELL) {
-      if (direction.includes('l')) x = x + w - MIN_WIDTH_OF_CELL
-      w = MIN_WIDTH_OF_CELL
+  const doRevert = useCallback(() => {
+    let currentActions = revertStack.current.pop()
+    while (!currentActions.length) {
+      currentActions = revertStack.current.pop()
     }
-    if (h < MIN_HEIGHT_OF_CELL) {
-      if (direction.includes('t')) y = y + h - MIN_HEIGHT_OF_CELL
-      h = MIN_HEIGHT_OF_CELL
-    }
-    cell.x = x
-    cell.y = y
-    cell.w = w
-    cell.h = h
-  }, [pageHeight, pageWidth])
-
-  const controlCellPosition = useCallback((cell:CellPropsType) => {
-    const { x, y, w, h } = cell
-    if (x < 0) cell.x = 0
-    if (y < 0) cell.y = 0
-    if ((x + w) > pageWidth) cell.x = pageWidth - w
-    if ((y + h) > pageHeight) cell.y = pageHeight - h
-  }, [pageHeight, pageWidth])
+    currentActions.forEach(({ action, target }) => {
+      // const { type, payload } = action
+      // const direction = payload.direction || ''
+      //
+      // switch (type) {
+      //   case 'resize':
+      //     // left
+      //     if (direction.includes('l')) {
+      //       currentCell.x += resizeX
+      //       currentCell.w -= resizeX
+      //     }
+      //     // right
+      //     if (direction.includes('r')) {
+      //       currentCell.w += resizeX
+      //     }
+      //     // top
+      //     if (direction.includes('t')) {
+      //       currentCell.y += resizeY
+      //       currentCell.h -= resizeY
+      //     }
+      //     // bottom
+      //     if (direction.includes('b')) {
+      //       currentCell.h += resizeY
+      //     }
+      //     break
+      //   case 'move':
+      //     break
+      //   case 'delete':
+      //     break
+      //   case 'add':
+      //     break
+      //   case 'up':
+      //     break
+      //   case 'down':
+      //     break
+      // }
+    })
+  }, [])
 
   return useReducer(reducer, initialState)
 }

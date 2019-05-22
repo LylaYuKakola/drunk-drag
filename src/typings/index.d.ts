@@ -1,5 +1,3 @@
-// 公共的type和interface
-
 export interface PlainObjectType {
   [propertyName:string]: any
 }
@@ -9,9 +7,7 @@ export interface CommonElementPropsType {
   contentProps?: any,
 }
 
-export interface FlexBlockPropsType extends CommonElementPropsType {}
-
-export interface CellPropsType extends CommonElementPropsType {
+export interface CellType extends CommonElementPropsType {
   w: number,
   h: number,
   x: number,
@@ -24,18 +20,18 @@ export interface CellPropsType extends CommonElementPropsType {
   className?: string,
 }
 
-export interface PagePropsType {
-  cells: CellPropsType[],
+export interface EditorType {
+  cells: CellType[],
   height: number,
   width: number,
   style: any,
-  onChange?: (cells:CellPropsType[]) => void,
+  onChange?: (cells:CellType[]) => void,
   needToolbar?: boolean,
-  id?: string,
+  id?: string, // 不指定则从内部获取
 }
 
 export interface ExportedPagePropsType {
-  cells: CellPropsType[],
+  cells: CellType[],
   height: number,
   width: number,
   isSingleScreen: boolean,
@@ -43,25 +39,24 @@ export interface ExportedPagePropsType {
 }
 
 export interface GuideLinePropsType {
-  allCells: CellPropsType[],
-  selectedCells: CellPropsType[],
+  allCells: CellType[],
+  selectedCells: CellType[],
   pageW:number,
   pageH:number,
   visible:boolean,
 }
 
-export interface StateOfReducerType {
-  allCells: CellPropsType[],
-  selectedCells: CellPropsType[],
+export interface CellsStateType {
+  allCells: CellType[],
+  selectedCells: CellType[],
 }
 
-export interface ActionOfReducerType {
+export interface ReducerActionType {
   type: string,
   payload?: {
-    key?: string,
     keys?: string[],
     data?: number[],
-    cell?: CellPropsType,
+    cell?: CellType,
     direction?: string,
   }
 }
