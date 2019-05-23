@@ -3,7 +3,7 @@ export interface PlainObjectType {
 }
 
 export interface CommonElementPropsType {
-  isPurePage?: boolean,
+  isViewer?: boolean,
   contentProps?: any,
 }
 
@@ -30,10 +30,11 @@ export interface EditorType {
   id?: string, // 不指定则从内部获取
 }
 
-export interface ExportedPagePropsType {
+export interface ViewerPropsType {
   cells: CellType[],
   height: number,
   width: number,
+  style: any,
   isSingleScreen: boolean,
   id: string,
 }
@@ -41,8 +42,8 @@ export interface ExportedPagePropsType {
 export interface GuideLinePropsType {
   allCells: CellType[],
   selectedCells: CellType[],
-  pageW:number,
-  pageH:number,
+  editorW:number,
+  editorH:number,
   visible:boolean,
 }
 

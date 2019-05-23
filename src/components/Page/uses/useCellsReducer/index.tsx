@@ -5,8 +5,34 @@
 import * as React from 'react'
 import { CellType, CellsStateType, ReducerActionType } from '../../../../typings'
 import guid  from '../../../../util/guid'
+import * as tj from '../../../../util/typeJudgement'
 
 const { useState, useReducer, useCallback, useRef } = React
+
+type PositionType = [number, number]
+type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T
+
+/**
+ * 获取点击到的cell
+ * @param allCells
+ * @param touchedPosition
+ */
+const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPosition) => {
+  const [startX, startY] = touchedPosition
+  let index = allCells.length - 1
+  while (index >= 0) {
+    const cell = allCells[index]
+    const { x, y, h, w } = cell
+    if ((startX >= x) &&
+      (startX <= (x + w)) &&
+      (startY >= y) &&
+      (startY <= (y + h))
+    ) {
+      return cell
+    }
+    index -= 1
+  }
+}
 
 export default function useCellsReducer(
   cells: CellType[],
@@ -28,6 +54,28 @@ export default function useCellsReducer(
       const { type, payload } = action
 
       switch (type) {
+        case 'click':
+          {
+            const [positionX, positionY] = payload.data
+            if (tj.cannotNumberUsed(positionX) || tj.cannotNumberUsed(positionY)) break
+            const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
+            if (currentCell) {
+              selectedCells = [currentCell]
+            } else {
+              selectedCells = []
+            }
+            break
+          }
+        case 'multiClick':
+          {
+            const [positionX, positionY] = payload.data
+            if (tj.cannotNumberUsed(positionX) || tj.cannotNumberUsed(positionY)) break
+            const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
+            if (currentCell) {
+              selectedCells = [...selectedCells, currentCell]
+            }
+            break
+          }
         case 'select':
           {
             const { keys } = payload
@@ -53,7 +101,8 @@ export default function useCellsReducer(
           }
         case 'resize':
           {
-            const [resizeX, resizeY] = payload.data || [0, 0]
+            const [resizeX, resizeY] = payload.data
+            if (tj.cannotNumberUsed(resizeX) || tj.cannotNumberUsed(resizeY)) break
             const direction = payload.direction || ''
 
             if (!resizeX && !resizeY) break
@@ -85,7 +134,8 @@ export default function useCellsReducer(
           }
         case 'move':
           {
-            const [moveX, moveY] = payload.data || [0, 0]
+            const [moveX, moveY] = payload.data
+            if (tj.cannotNumberUsed(moveX) || tj.cannotNumberUsed(moveY)) break
             if (moveX || moveY) {
               selectedCells.forEach((cell:CellType) => {
                 cell.x += moveX

@@ -1,12 +1,14 @@
 import * as React from 'react'
 import { HashRouter, Switch, Route } from 'react-router-dom'
-import PageTest from './page-test'
+import EditorTest from './editor-test'
+import ViewTest from './view-test'
 
 export default () => {
   return (
     <HashRouter>
       <Switch>
-        <Route exact path="/" component={PageTest} />
+        <Route path="/editor" component={EditorTest} />
+        <Route path="/view" component={ViewTest} />
       </Switch>
     </HashRouter>
   )

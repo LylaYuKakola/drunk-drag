@@ -13,12 +13,12 @@ function getYGuidelines(
   x:number,
   w:number,
   xToGuide:number,
-  withoutPageCenter:boolean,
-  pageW:number,
+  withoutEditorCenter:boolean,
+  editorW:number,
 ) {
   let isXToGuideNeeded = false
   const centerX = x + (w / 2)
-  const pageCenterX = (pageW || 0) / 2
+  const editorCenterX = (editorW || 0) / 2
   const resultLines:any[] = []
 
   // xToGuide vs x
@@ -36,10 +36,10 @@ function getYGuidelines(
     isXToGuideNeeded = true
     resultLines.push(<div style={{ left: centerX }} className="guideline-y" />)
   }
-  // xToGuide vs pageCenterX
-  if (Math.abs(xToGuide - pageCenterX) < MIN_DISTANCE && !withoutPageCenter) {
+  // xToGuide vs editorCenterX
+  if (Math.abs(xToGuide - editorCenterX) < MIN_DISTANCE && !withoutEditorCenter) {
     isXToGuideNeeded = true
-    resultLines.push(<div style={{ left: pageCenterX }} className="guideline-y" />)
+    resultLines.push(<div style={{ left: editorCenterX }} className="guideline-y" />)
   }
   // isXToGuideNeeded
   if (isXToGuideNeeded) {
@@ -53,12 +53,12 @@ function getXGuidelines(
   y:number,
   h:number,
   yToGuide:number,
-  withoutPageCenter:boolean,
-  pageH:number,
+  withoutEditorCenter:boolean,
+  editorH:number,
 ) {
   let isYToGuideNeeded = false
   const centerY = y + (h / 2)
-  const pageCenterY = (pageH || 0) / 2
+  const editorCenterY = (editorH || 0) / 2
   const resultLines:any[] = []
 
   // yToGuide vs y
@@ -76,10 +76,10 @@ function getXGuidelines(
     isYToGuideNeeded = true
     resultLines.push(<div style={{ top: centerY }} className="guideline-x" />)
   }
-  // yToGuide vs pageCenterY
-  if (Math.abs(yToGuide - pageCenterY) < MIN_DISTANCE && !withoutPageCenter) {
+  // yToGuide vs editorCenterY
+  if (Math.abs(yToGuide - editorCenterY) < MIN_DISTANCE && !withoutEditorCenter) {
     isYToGuideNeeded = true
-    resultLines.push(<div style={{ top: pageCenterY }} className="guideline-x" />)
+    resultLines.push(<div style={{ top: editorCenterY }} className="guideline-x" />)
   }
   // isXToGuideNeeded
   if (isYToGuideNeeded) {
@@ -95,8 +95,8 @@ function getAllGuideline(
   activeY:number,
   activeW:number,
   activeH:number,
-  pageW:number,
-  pageH:number,
+  editorW:number,
+  editorH:number,
   cells:CellType[],
   selectedCells: CellType[],
   visible:boolean,
@@ -124,32 +124,32 @@ function getAllGuideline(
     if (selectedCells.includes(cell)) return
 
     // activeX 对应的y轴辅助线和其他y轴辅助线做对比
-    result.push(...getYGuidelines(x, w, activeX, false, pageW))
+    result.push(...getYGuidelines(x, w, activeX, false, editorW))
     // activeCenterX 对应的y轴辅助线和其他y轴辅助线做对比
-    result.push(...getYGuidelines(x, w, activeCenterX, false, pageW))
+    result.push(...getYGuidelines(x, w, activeCenterX, false, editorW))
     // activeX+activeW 对应的y轴辅助线和其他y轴辅助线做对比
-    result.push(...getYGuidelines(x, w, (activeX + activeW), false, pageW))
+    result.push(...getYGuidelines(x, w, (activeX + activeW), false, editorW))
 
     // activeY 对应的y轴辅助线和其他y轴辅助线做对比
-    result.push(...getXGuidelines(y, h, activeY, false, pageH))
+    result.push(...getXGuidelines(y, h, activeY, false, editorH))
     // activeCenterX 对应的y轴辅助线和其他y轴辅助线做对比
-    result.push(...getXGuidelines(y, h, activeCenterY, false, pageH))
+    result.push(...getXGuidelines(y, h, activeCenterY, false, editorH))
     // activeX对应的y轴辅助线和其他y轴辅助线做对比
-    result.push(...getXGuidelines(y, h, (activeY + activeH), false, pageH))
+    result.push(...getXGuidelines(y, h, (activeY + activeH), false, editorH))
   })
 
-  // 这里需要判断如果此时guideline还为空，可能是因为页面上所有的cell都为selected状态，此时只需要和page的center辅助线进行匹配
+  // 这里需要判断如果此时guideline还为空，可能是因为页面上所有的cell都为selected状态，此时只需要和editor的center辅助线进行匹配
   // @TODO 这样处理不是很好，但是我也不想改了
   if (!result.length) {
-    result.push(...getYGuidelines(activeX, activeW, pageW / 2, true, pageW))
-    result.push(...getXGuidelines(activeY, activeH, pageH / 2, true, pageH))
+    result.push(...getYGuidelines(activeX, activeW, editorW / 2, true, editorW))
+    result.push(...getXGuidelines(activeY, activeH, editorH / 2, true, editorH))
   }
 
   return result
 }
 
 export default function ({
-  allCells, selectedCells, pageH, pageW, visible,
+  allCells, selectedCells, editorH, editorW, visible,
 }: GuideLinePropsType) {
 
   const [
@@ -180,8 +180,8 @@ export default function ({
     activeY,
     activeW,
     activeH,
-    pageW,
-    pageH,
+    editorW,
+    editorH,
     allCells,
     selectedCells,
     visible,

@@ -4,14 +4,14 @@ import { CellsStateType } from '../../../../typings'
 
 const { useMemo } = React
 
-export default function useCells(cellsState:CellsStateType):any[] {
+export default function useCells(cellsState:CellsStateType, isViewer:boolean = false):any[] {
   return useMemo<any[]|null>(() => {
     const { allCells, selectedCells } = cellsState
     return allCells.map((cell, index) => (
       <Cell
         {...cell}
         isSelected={selectedCells && selectedCells.includes(cell)}
-        isPurePage={false}
+        isViewer={isViewer}
         index={index}
         key={index}
       />

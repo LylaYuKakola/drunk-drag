@@ -20,16 +20,16 @@ interface CellStyleType {
  */
 export default function (cell:CellType) {
   const {
-    w, h, x, y, type, style, contentProps, isSelected, isPurePage, id,
+    w, h, x, y, type, style, contentProps, isSelected, isViewer, id,
   } = cell
 
   const content = useMemo<any|null>(() => {
     const component = Elements[type]
     return component({
-      isPurePage,
+      isViewer,
       ...contentProps,
     })
-  }, [type, contentProps, isPurePage])
+  }, [type, contentProps, isViewer])
 
   const cellStyle = useMemo<CellStyleType>(() => ({
     top: y || 0,
@@ -49,7 +49,7 @@ export default function (cell:CellType) {
       <div className="cell-content" style={...style}>{ content }</div>
       {/* *********************************  拖拽边框  ******************************* */}
       {
-        (isSelected && !isPurePage) && ([
+        (isSelected && !isViewer) && ([
           (
             <div
               data-tag={`l*${id}`}

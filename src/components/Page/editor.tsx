@@ -11,27 +11,12 @@ import useShortcutKey from './uses/useShortcutKey'
 import guid from '../../util/guid'
 import useCellsReducer from './uses/useCellsReducer'
 import useTouchedRelativePosition from './uses/useTouchedRelativePosition'
+import * as tj from '../../util/typeJudgement'
+import deepCopy from '../../util/deepCopy'
 
-const { useState, useRef, useCallback, useLayoutEffect } = React
+const { useState, useRef, useEffect, useCallback, useLayoutEffect } = React
 
 type PositionType = [number, number]
-type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T
-const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPosition) => {
-  const [startX, startY] = touchedPosition
-  let index = allCells.length - 1
-  while (index >= 0) {
-    const cell = allCells[index]
-    const { x, y, h, w } = cell
-    if ((startX >= x) &&
-      (startX <= (x + w)) &&
-      (startY >= y) &&
-      (startY <= (y + h))
-    ) {
-      return cell
-    }
-    index -= 1
-  }
-}
 
 /**
  * 拖拽编辑面板组件
@@ -44,7 +29,7 @@ const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPositi
  */
 export default function editor({ width, height, cells, onChange, id, style }:EditorType) {
 
-  const [pageId] = useState(id || `page-${guid()}`) // id设置为常量
+  const [editorId] = useState(`editor-${id || guid()}`) // id设置为常量
 
   const panelRef = useRef<HTMLDivElement|null>(null)
   const startPosition = useRef<PositionType>()
@@ -55,10 +40,10 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
   const [editorPanel, setEditorPanel] = useState<HTMLDivElement|null>(null)
 
   const [cellsState, dispatchCellsState] = useCellsReducer(
-    cells.map((cell:CellType) => {
+    deepCopy(cells.map((cell:CellType) => {
       cell.id = cell.id || `cell-${guid()}`
       return cell
-    }),
+    })),
   )
 
   const getTouchRelativePosition = useTouchedRelativePosition(editorPanel)
@@ -72,20 +57,12 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
     if (event!.target!.dataset!.tag) {
       resizeTag.current = event.target.dataset.tag
     } else {
-      const allCells = cellsState.allCells
-      const currentCell = getCurrentTouchedCell(allCells, startPosition.current)
-      if (currentCell) {
-        dispatchCellsState([{
-          type: 'select',
-          payload: {
-            keys: [currentCell.id],
-          },
-        }])
-      } else {
-        dispatchCellsState([{
-          type: 'clearSelection',
-        }])
-      }
+      dispatchCellsState([{
+        type: 'click',
+        payload: {
+          data: startPosition.current,
+        },
+      }])
     }
 
     if (event.type.startsWith('mouse')) {
@@ -95,7 +72,7 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
       document.addEventListener('touchmove', handleMove)
       document.addEventListener('touchend', handleDragEnd)
     }
-  }, [cellsState])
+  }, [])
 
   // drag move
   const handleMove = useCallback((event:MouseEvent|TouchEvent) => {
@@ -154,7 +131,7 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
     setTimeout(() => {
       setGuideLinesVisible(false)
     }, 200)
-  }, [handleMove])
+  }, [])
 
   // cell的渲染
   const cellDoms = useCells(cellsState)
@@ -162,8 +139,8 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
   // 标线的渲染
   const guideLines = useGuildLine({
     ...cellsState,
-    pageW: width,
-    pageH: height,
+    editorW: width,
+    editorH: height,
     visible: guideLinesVisible,
   })
 
@@ -179,14 +156,18 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
     }
   }, [panelRef.current])
 
+  useEffect(() => {
+    if (onChange && tj.isFunction(onChange)) onChange(cellsState.allCells)
+  }, [cellsState])
+
   return (
     <div
-      id={pageId}
-      key={pageId}
+      id={editorId}
+      key={editorId}
       ref={panelRef}
       onMouseDown={handleDragStart}
       onTouchStart={handleDragStart}
-      className="page-container"
+      className="editor"
       style={{
         ...style,
         width,
