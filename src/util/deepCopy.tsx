@@ -1,4 +1,6 @@
-import { PlainObjectType } from '../typings'
+/**
+ * @desc 深度克隆，object|array
+ */
 
 export default function deepCopy(obj:any):any {
   const result:any = Array.isArray(obj) ? [] : {}

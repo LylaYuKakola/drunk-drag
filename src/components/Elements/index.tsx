@@ -1,4 +1,6 @@
-/** cell的内容集合 **/
+/**
+ * @desc cell的内容集合
+ */
 
 import * as React from 'react'
 

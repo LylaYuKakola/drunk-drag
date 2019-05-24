@@ -1,3 +1,7 @@
+/**
+ * @desc cell构建DOM
+ */
+
 import * as React from 'react'
 import Cell from '../../../Cell'
 import { CellsStateType } from '../../../../typings'

@@ -1,5 +1,5 @@
 /**
- * @desc cells的相关操作
+ * @desc cells的相关操作，核心
  */
 
 import * as React from 'react'

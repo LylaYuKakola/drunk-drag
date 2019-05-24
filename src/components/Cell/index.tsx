@@ -1,4 +1,6 @@
-/** 面边中的元素组件 **/
+/**
+ * @desc 面边中的元素组件
+ */
 
 import * as React from 'react'
 import './index.scss'

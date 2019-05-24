@@ -1,5 +1,9 @@
 /**
  * @desc 快捷键
+ * control + delete
+ * shift + 上下左右
+ * control + c / v / z
+ * shift + clickDown 多选
  */
 
 import * as React from 'react'
@@ -13,10 +17,8 @@ interface ShortcutKeyType {
 }
 
 /**
- * control + delete
- * shift + 上下左右
- * control + c / v / z
- * shift + clickDown 多选
+ * @param isActive
+ * @param dispatch
  */
 export default function useShortcutKey({
   isActive,

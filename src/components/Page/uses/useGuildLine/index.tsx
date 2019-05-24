@@ -1,6 +1,5 @@
 /**
  * @desc 标线内容
- * 1.
  */
 
 import * as React from 'react'

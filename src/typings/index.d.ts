@@ -1,6 +1,6 @@
-export interface PlainObjectType {
-  [propertyName:string]: any
-}
+/**
+ * @desc 公用类型集合
+ */
 
 export interface CommonElementPropsType {
   isViewer?: boolean,
