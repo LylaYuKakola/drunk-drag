@@ -61,3 +61,5 @@ export interface ReducerActionType {
     direction?: string,
   }
 }
+
+export type MountedFunctionType = (id:string) => void

@@ -6,9 +6,6 @@ import './index.scss'
 const { useState, useCallback, useMemo } = React
 const { Viewer }:DrunkDragType = DD
 
-// @ts-ignore
-window['DD'] = DD
-
 export default function () {
 
   const [pageWidth, setPageWidth] = useState(360)

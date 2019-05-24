@@ -4,7 +4,7 @@
 
 import * as React from 'react'
 import { CellType, CellsStateType, ReducerActionType } from '../../../../typings'
-import guid  from '../../../../util/guid'
+import { getCellId } from '../../../../util/guid'
 import * as tj from '../../../../util/typeJudgement'
 
 const { useState, useReducer, useCallback, useRef } = React
@@ -94,17 +94,11 @@ export default function useCellsReducer(
             }))]
             break
           }
-        case 'clearSelection':
-          {
-            selectedCells = []
-            break
-          }
         case 'resize':
           {
             const [resizeX, resizeY] = payload.data
             if (tj.cannotNumberUsed(resizeX) || tj.cannotNumberUsed(resizeY)) break
             const direction = payload.direction || ''
-
             if (!resizeX && !resizeY) break
             if (!direction) break
             if (!selectedCells.length) break
@@ -148,7 +142,7 @@ export default function useCellsReducer(
           {
             const newCell = payload.cell
             if (newCell) break
-            newCell.id = newCell.id || `cell-${guid()}` // id允许重复
+            newCell.id = getCellId(newCell.id) // id允许重复
             allCells = [...allCells, newCell]
             break
           }
@@ -157,6 +151,11 @@ export default function useCellsReducer(
             allCells = allCells.filter((cell:CellType) => {
               return !selectedCells.includes(cell)
             })
+            selectedCells = []
+            break
+          }
+        case 'clean':
+          {
             selectedCells = []
             break
           }

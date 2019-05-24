@@ -2,4 +2,8 @@ import * as React from 'react'
 
 const allChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 const replacer = ():string => allChars[Math.floor(Math.random() * 62)]
-export default ():string => 'xxxx-xxxx'.replace(/[x]/g, replacer)
+const guid = ():string => 'xxxxxxxx'.replace(/[x]/g, replacer)
+
+export const getEditorId:(id:string) => string = id => id || guid()
+export const getViewerId:(id:string) => string = id => id || guid()
+export const getCellId:(id:string) => string = id => id || guid()

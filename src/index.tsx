@@ -2,6 +2,7 @@ import * as React from 'react'
 import editor from './components/Page/editor'
 import viewer from './components/Page/viewer'
 import Elements from './components/Elements'
+import Commander from './commander'
 import * as tj from './util/typeJudgement'
 import '../font/iconfont.css'
 
@@ -47,8 +48,8 @@ const getAllElementKeys = () => {
   return [...cache.elementsPool]
 }
 
-const getViewer = (id:string) => cache.viewerInstancesMap.get(id) || null
-const getEditor = (id:string) => cache.editorInstancesMap.get(id) || null
+const mountViewer = (id:string) => cache.viewerInstancesMap.delete(id)
+const mountEditor = (id:string) => cache.editorInstancesMap.delete(id)
 
 export interface DrunkDragType {
   registerElement: any,
@@ -61,14 +62,14 @@ export interface DrunkDragType {
   Viewer: any,
 }
 
-export default Object.freeze({
+const $DD = Object.freeze({
   registerElement,
   unregisterElement,
   hasElement,
   getAllElementKeys,
-  getViewer,
-  getEditor,
-  Editor: new Proxy(editor, {
+  getViewer: (id:string) => cache.viewerInstancesMap.get(id) || null,
+  getEditor: (id:string) => cache.editorInstancesMap.get(id) || null,
+  Editor: new Proxy(editor(mountEditor), {
     apply (target, ctx, args) {
       const newEditorInstance = Reflect.apply(target, ctx, args)
       const id = newEditorInstance.ref.current ? newEditorInstance.ref.current.id : null
@@ -76,12 +77,26 @@ export default Object.freeze({
       return newEditorInstance
     },
   }),
-  Viewer: new Proxy(viewer, {
+  Viewer: new Proxy(viewer(mountViewer), {
     apply (target, ctx, args) {
-      const newViewerInstance = Reflect.apply(target, ctx, args)
+      const [newViewerInstance, dispatch, getCell] = Reflect.apply(target, ctx, args)
       const id = newViewerInstance.ref.current ? newViewerInstance.ref.current.id : null
-      cache.viewerInstancesMap.set(id, newViewerInstance)
-      return newViewerInstance
+      const commander = Commander(dispatch, getCell)
+
+      const result = new Proxy(newViewerInstance, {
+        get(target, key:string, receiver) {
+          if (commander[key]) return Reflect.get(commander, key, receiver)
+          return Reflect.get(target, key, receiver)
+        },
+      })
+
+      cache.viewerInstancesMap.set(id, result)
+      return result
     },
   }),
 })
+
+// @ts-ignore
+if (window) window['$DD'] = $DD
+
+export default $DD

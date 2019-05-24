@@ -1,71 +1,101 @@
+/**
+ * @desc 编辑面板
+ */
+
 import * as React from 'react'
-import { CellType, ViewerPropsType } from '../../typings'
+import { CellType, ViewerPropsType, MountedFunctionType } from '../../typings'
 import useCells from './uses/useCells'
-import guid from '../../util/guid'
+import { getViewerId, getCellId } from '../../util/guid'
 import useCellsReducer from './uses/useCellsReducer'
 import deepCopy from '../../util/deepCopy'
+import * as tj from '../../util/typeJudgement'
 
-const { useState, useLayoutEffect, useRef } = React
+const { useState, useLayoutEffect, useRef, useEffect, useCallback } = React
 
-export default function viewer({
-  cells,
-  height,
-  width,
-  style,
-  isSingleScreen,
-  id,
-}:ViewerPropsType) {
+export default function (onMounted?:MountedFunctionType) {
 
-  const [viewerId] = useState(`viewer-${id || guid()}`) // id设置为常量
-  const [parentSize, setParentSize] = useState<{width:number, height:number}>({ width:0, height:0 })
-  const viewerRef = useRef<HTMLDivElement|null>(null)
+  /**
+   * 展示面板组件
+   * @param width 面板宽度
+   * @param height 面板高度
+   * @param cells 面板内容
+   * @param id 面板id
+   * @param style 面板扩展样式
+   * @param isSingleScreen  @TODO
+   */
+  return function viewer({ cells, height, width, style, isSingleScreen, id }:ViewerPropsType) {
+    const [viewerId] = useState(getViewerId(id)) // id设置为常量
+    const [parentSize, setParentSize] = useState<{width:number, height:number}>({ width:0, height:0 })
+    const viewerRef = useRef<HTMLDivElement|null>(null)
 
-  const [cellsState, dispatchCellsState] = useCellsReducer(
-    deepCopy(cells.map((cell:CellType) => {
-      cell.id = cell.id || `cell-${guid()}`
-      return cell
-    })),
-  ) // 非受控了...
+    const [cellsState, dispatchCellsState] = useCellsReducer(
+      deepCopy(cells.map((cell:CellType) => {
+        cell.id = getCellId(cell.id)
+        return cell
+      })),
+    ) // 非受控了...
 
-  // cell的渲染
-  const cellDoms = useCells(cellsState, true)
+    // cell的渲染
+    const cellDoms = useCells(cellsState, true)
 
-  useLayoutEffect(() => {
-    let purePageContainerDom = viewerRef.current.parentElement
-    if (!purePageContainerDom) {
-      setParentSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-    } else {
-      setParentSize({
-        width: purePageContainerDom.offsetWidth,
-        height: purePageContainerDom.offsetHeight,
-      })
-    }
-    purePageContainerDom = null
-  }, [viewerRef.current])
+    useLayoutEffect(() => {
+      let purePageContainerDom = viewerRef.current.parentElement
+      if (!purePageContainerDom) {
+        setParentSize({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        })
+      } else {
+        setParentSize({
+          width: purePageContainerDom.offsetWidth,
+          height: purePageContainerDom.offsetHeight,
+        })
+      }
+      purePageContainerDom = null
+    }, [viewerRef.current])
 
-  return (
-    <div
-      id={viewerId}
-      key={viewerId}
-      ref={viewerRef}
-      className="viewer"
-      style={{
-        ...style,
-        width,
-        height,
-        overflowX: 'hidden',
-        overflowY: isSingleScreen ? 'hidden' : 'auto',
-        transform: `scale(${parentSize.width / (width || 1)})`,
-        position: 'relative',
-        transformOrigin: 'left top',
-      }}
-    >
-      { cellDoms }
-    </div>
-  )
+    const getCell = useCallback((ids?:string[]) => {
+      const allCells = deepCopy(cellsState.allCells)
+      if (!ids) return cellsState.allCells
+      if (tj.isArray(ids)) {
+        if (ids.length === 1) {
+          if (ids[0] === '__A_L_L__') {
+            return allCells
+          }
+          return allCells.find((cell:CellType) => ids[0] === cell.id)
+        }
+        return allCells.filter((cell:CellType) => ids.includes(cell.id))
+      }
+      return []
+    }, [cellsState])
+
+    useEffect(() => {
+      return () => {
+        if (onMounted && tj.isFunction(onMounted)) onMounted(viewerId)
+      }
+    }, [])
+
+    return [(
+      <div
+        id={viewerId}
+        key={viewerId}
+        ref={viewerRef}
+        className="viewer"
+        style={{
+          ...style,
+          width,
+          height,
+          overflowX: 'hidden',
+          overflowY: isSingleScreen ? 'hidden' : 'auto',
+          transform: `scale(${parentSize.width / (width || 1)})`,
+          position: 'relative',
+          transformOrigin: 'left top',
+        }}
+      >
+        { cellDoms }
+      </div>
+    ), dispatchCellsState, getCell]
+  }
 }
 
 // if (isSingleScreen) {
