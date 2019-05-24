@@ -52,14 +52,16 @@ export interface CellsStateType {
   selectedCells: CellType[],
 }
 
+export interface ReducerPayloadType {
+  keys?: string[],
+  data?: number[],
+  cell?: CellType,
+  direction?: string,
+}
+
 export interface ReducerActionType {
   type: string,
-  payload?: {
-    keys?: string[],
-    data?: number[],
-    cell?: CellType,
-    direction?: string,
-  }
+  payload?: ReducerPayloadType,
 }
 
 export type MountedFunctionType = (id:string) => void

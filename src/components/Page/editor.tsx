@@ -146,6 +146,21 @@ export default function (onMounted?:MountedFunctionType) {
       visible: guideLinesVisible,
     })
 
+    const getCell = useCallback((ids?:string[]) => {
+      const allCells = deepCopy(cellsState.allCells)
+      if (!ids) return cellsState.allCells
+      if (tj.isArray(ids)) {
+        if (ids.length === 1) {
+          if (ids[0] === '__A_L_L__') {
+            return allCells
+          }
+          return allCells.find((cell:CellType) => ids[0] === cell.id)
+        }
+        return allCells.filter((cell:CellType) => ids.includes(cell.id))
+      }
+      return []
+    }, [cellsState])
+
     // side effect 快捷键
     useShortcutKey({
       isActive: isActiveEditor,
@@ -168,7 +183,7 @@ export default function (onMounted?:MountedFunctionType) {
       }
     }, [])
 
-    return (
+    return [(
       <div
         id={editorId}
         key={editorId}
@@ -186,6 +201,6 @@ export default function (onMounted?:MountedFunctionType) {
         { cellDoms }
         { guideLines }
       </div>
-    )
+    ), dispatchCellsState, getCell]
   }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "react-ts-parcel-temeplate-component",
-  "version": "1.0.0",
-  "description": "react-ts-parcel-cli的组件开发模版",
+  "name": "drunk-drag",
+  "version": "0.1.0",
+  "description": "拖拽面板",
   "main": "lib/index.js",
   "license": "MIT",
   "files": [

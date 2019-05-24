@@ -71,9 +71,18 @@ const $DD = Object.freeze({
   getEditor: (id:string) => cache.editorInstancesMap.get(id) || null,
   Editor: new Proxy(editor(mountEditor), {
     apply (target, ctx, args) {
-      const newEditorInstance = Reflect.apply(target, ctx, args)
+      const [newEditorInstance, dispatch, getCell] = Reflect.apply(target, ctx, args)
       const id = newEditorInstance.ref.current ? newEditorInstance.ref.current.id : null
-      cache.editorInstancesMap.set(id, newEditorInstance)
+      const commander = Commander(dispatch, getCell)
+
+      const result = new Proxy(newEditorInstance, {
+        get(target, key:string, receiver) {
+          if (commander[key]) return Reflect.get(commander, key, receiver)
+          return Reflect.get(target, key, receiver)
+        },
+      })
+
+      cache.editorInstancesMap.set(id, result)
       return newEditorInstance
     },
   }),

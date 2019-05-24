@@ -23,7 +23,7 @@ export default function () {
   }, [])
 
   const handleChangeEditor = (newCells) => {
-    setCells(newCells)
+    console.log(newCells)
   }
 
   return (
@@ -45,6 +45,16 @@ export default function () {
         <label>高度：</label><input value={pageHeight} onChange={handleChangeHeight} type="text"/><br/>
         <button>复制当前选中的元素</button><br/>
         <button>删除当前选中的元素</button><br/>
+      </div>
+      <div className="test-editor">
+        <Editor
+          id="002"
+          cells={cells}
+          width={pageWidth}
+          height={pageHeight}
+          style={{ backgroundColor: '#ff8080' }}
+          onChange={handleChangeEditor}
+        />
       </div>
     </div>
   )
