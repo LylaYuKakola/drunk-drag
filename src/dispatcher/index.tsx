@@ -270,7 +270,6 @@ export default function useCellsReducer(
     if (isAllCellsChanged) {
       timeoutToPushStack.current = setTimeout(() => {
         revertedStack.current.push(JSON.stringify(currentState.allCells))
-        console.log(revertedStack.current)
       }, 400)
     }
     return currentState

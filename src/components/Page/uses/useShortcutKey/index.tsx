@@ -28,7 +28,7 @@ export default function useShortcutKey({
   const isControlDown:{current:boolean} = useRef(false)
   const isShiftDown:{current:boolean} = useRef(false)
 
-  const mouseDown = useCallback((event: KeyboardEvent) => {
+  const keyDown = useCallback((event: KeyboardEvent) => {
     if (!isActive) return
 
     const keyStr = event.key
@@ -95,7 +95,7 @@ export default function useShortcutKey({
     }
   }, [isActive, dispatch])
 
-  const mouseUp = useCallback((event: KeyboardEvent) => {
+  const keyUp = useCallback((event: KeyboardEvent) => {
     if (!isActive) return
 
     const keyStr = event.key
@@ -105,12 +105,12 @@ export default function useShortcutKey({
   }, [isActive, dispatch])
 
   useEffect(() => {
-    document.addEventListener('keydown', mouseDown)
-    document.addEventListener('keyup', mouseUp)
+    document.addEventListener('keydown', keyDown)
+    document.addEventListener('keyup', keyUp)
 
     return () => {
-      document.removeEventListener('keydown', mouseDown)
-      document.removeEventListener('keyup', mouseUp)
+      document.removeEventListener('keydown', keyDown)
+      document.removeEventListener('keyup', keyUp)
     }
-  }, [mouseDown, mouseUp])
+  }, [keyDown, keyUp])
 }

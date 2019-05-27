@@ -50,9 +50,18 @@ export default function (onMounted?:MountedFunctionType) {
 
     const getTouchRelativePosition = useTouchedRelativePosition(editorPanel)
 
+    const handleClickOutside = useCallback((event:any) => {
+      const path = event.path
+      if (!path || !path.length) {
+        return setIsActiveEditor(false)
+      }
+      if (path.every((item:HTMLElement) => item.id !== editorId)) {
+        setIsActiveEditor(false)
+      }
+    }, [editorId])
+
     const handleDragStart = useCallback((event:any) => {
       // event.nativeEvent.stopImmediatePropagation()
-
       startPosition.current = getTouchRelativePosition(event)
       setIsActiveEditor(true)
 
@@ -178,8 +187,11 @@ export default function (onMounted?:MountedFunctionType) {
     }, [cellsState])
 
     useEffect(() => {
+      document.addEventListener('mousedown', handleClickOutside)
       return () => {
         if (onMounted && tj.isFunction(onMounted)) onMounted(editorId)
+        document.removeEventListener('mousedown', handleClickOutside)
+
       }
     }, [])
 
