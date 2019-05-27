@@ -6,7 +6,7 @@ import * as React from 'react'
 import { CellType, ViewerPropsType, MountedFunctionType } from '../../typings'
 import useCells from './uses/useCells'
 import { getViewerId, getCellId } from '../../util/guid'
-import useCellsReducer from './uses/useCellsReducer'
+import useCellsReducer from '../../dispatcher'
 import deepCopy from '../../util/deepCopy'
 import * as tj from '../../util/typeJudgement'
 

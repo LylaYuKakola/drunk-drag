@@ -33,7 +33,7 @@ export default function useShortcutKey({
 
     const keyStr = event.key
     if (keyStr === 'Shift') isShiftDown.current = true
-    if (keyStr === 'Control') isControlDown.current = true
+    if (keyStr === 'Control')  isControlDown.current = true
 
     if (
       (isShiftDown.current && isControlDown.current) ||
@@ -44,11 +44,14 @@ export default function useShortcutKey({
 
     if (isControlDown.current) {
       switch (keyStr) {
-        case 'C':
+        case 'c':
           break
-        case 'V':
+        case 'v':
           break
-        case 'Z':
+        case 'z':
+          dispatch([{
+            type: 'revert',
+          }])
           break
         case 'Backspace':
           dispatch([{

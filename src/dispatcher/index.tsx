@@ -3,9 +3,10 @@
  */
 
 import * as React from 'react'
-import { CellType, CellsStateType, ReducerActionType, ReducerPayloadType } from '../../../../typings'
-import { getCellId } from '../../../../util/guid'
-import * as tj from '../../../../util/typeJudgement'
+import { CellType, CellsStateType, ReducerActionType, ReducerPayloadType } from '../typings'
+import { getCellId } from '../util/guid'
+import * as tj from '../util/typeJudgement'
+import Timeout = NodeJS.Timeout;
 
 const { useState, useReducer, useCallback, useRef } = React
 
@@ -205,11 +206,16 @@ export default function useCellsReducer(
     selectedCells: [],
   })[0] // 完全非受控
 
+  const revertedStack = useRef<string[]>([JSON.stringify(cells)])
+  const timeoutToPushStack = useRef<Timeout>()
+
   const reducer = useCallback((
     state:CellsStateType,
     actions:ReducerActionType[],
   ):CellsStateType  => {
     let currentState = state
+    let isAllCellsChanged = false
+    clearTimeout(timeoutToPushStack.current)
     actions.forEach((action: any) => {
       const { type, payload } = action
       switch (type) {
@@ -227,34 +233,61 @@ export default function useCellsReducer(
           break
         case 'resize':
           currentState = doResize(currentState, payload)
+          isAllCellsChanged = true
           break
         case 'move':
           currentState = doMove(currentState, payload)
+          isAllCellsChanged = true
           break
         case 'add':
           currentState = doAdd(currentState, payload)
+          isAllCellsChanged = true
           break
         case 'delete':
           currentState = doDelete(currentState)
+          isAllCellsChanged = true
           break
         case 'clean':
           currentState = doClean()
+          isAllCellsChanged = true
           break
         case 'highest':
           currentState = doHighest(currentState, payload)
+          isAllCellsChanged = true
           break
         case 'lowest':
           currentState = doLowest(currentState, payload)
+          isAllCellsChanged = true
           break
         case 'revert':
-          // doRevert()
+          currentState = doRevert()
           break
         default:
           console.warn('cell没有这个操作')
           break
       }
     })
+    if (isAllCellsChanged) {
+      timeoutToPushStack.current = setTimeout(() => {
+        revertedStack.current.push(JSON.stringify(currentState.allCells))
+        console.log(revertedStack.current)
+      }, 400)
+    }
     return currentState
+  }, [])
+
+  const doRevert = useCallback<HandlerType>(() => {
+    if (revertedStack.current.length < 2) {
+      return {
+        allCells: JSON.parse(revertedStack.current[0]),
+        selectedCells:[],
+      }
+    }
+    revertedStack.current.pop()
+    return {
+      allCells: JSON.parse(revertedStack.current[revertedStack.current.length - 1]),
+      selectedCells:[],
+    }
   }, [])
 
   return useReducer(reducer, initialState)

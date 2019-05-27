@@ -147,5 +147,10 @@ export default function commander(dispatch:DispatchType, cellGetter:CellGetterTy
         type: 'clean',
       }])
     },
+    revert() {
+      dispatch([{
+        type: 'revert',
+      }])
+    },
   })
 }
