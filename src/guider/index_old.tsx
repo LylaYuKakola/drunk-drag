@@ -1,10 +1,10 @@
 /**
- * @desc 标线内容
+ * @desc 指导拖拽，显示标线
  */
 
 import * as React from 'react'
-import { GuideLinePropsType, CellType } from '../../../../typings'
-import { MIN_DISTANCE } from '../../../../util/constVariables'
+import { GuideLinePropsType, CellType } from '../typings'
+import { MIN_DISTANCE } from '../util/constVariables'
 import './index.scss'
 
 // Y轴的标线

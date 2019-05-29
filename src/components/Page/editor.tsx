@@ -6,13 +6,14 @@ import * as React from 'react'
 import './index.scss'
 import { CellType, EditorType, MountedFunctionType } from '../../typings'
 import useCells from './uses/useCells'
-import useGuildLine from './uses/useGuildLine'
+import useGuider from '../../guider'
 import useShortcutKey from './uses/useShortcutKey'
 import { getEditorId, getCellId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
 import useTouchedRelativePosition from './uses/useTouchedRelativePosition'
 import * as tj from '../../util/typeJudgement'
 import deepCopy from '../../util/deepCopy'
+import Timeout = NodeJS.Timeout
 
 const { useState, useRef, useEffect, useCallback, useLayoutEffect } = React
 
@@ -36,6 +37,7 @@ export default function (onMounted?:MountedFunctionType) {
     const panelRef = useRef<HTMLDivElement|null>(null)
     const startPosition = useRef<PositionType>()
     const resizeTag = useRef<string>('')
+    const timeoutToHideGuideLines = useRef<Timeout>()
 
     const [guideLinesVisible, setGuideLinesVisible] = useState<boolean>(false)
     const [isActiveEditor, setIsActiveEditor] = useState<boolean>(false)
@@ -87,7 +89,7 @@ export default function (onMounted?:MountedFunctionType) {
 
     // drag move
     const handleMove = useCallback((event:MouseEvent|TouchEvent) => {
-      setGuideLinesVisible(true)
+      // setGuideLinesVisible(true)
 
       const [startX, startY] = startPosition.current
       const [moveX, moveY] = getTouchRelativePosition(event)
@@ -139,20 +141,18 @@ export default function (onMounted?:MountedFunctionType) {
       document.body.style.userSelect = ''
       startPosition.current = null
       resizeTag.current = ''
-      setTimeout(() => {
-        setGuideLinesVisible(false)
-      }, 200)
     }, [])
 
     // cell的渲染
     const cellDoms = useCells(cellsState)
 
     // 标线的渲染
-    const guideLines = useGuildLine({
+    const guideLines = useGuider({
       ...cellsState,
       editorW: width,
       editorH: height,
       visible: guideLinesVisible,
+      dispatcher: dispatchCellsState,
     })
 
     const getCell = useCallback((ids?:string[]) => {
@@ -184,6 +184,13 @@ export default function (onMounted?:MountedFunctionType) {
 
     useEffect(() => {
       if (onChange && tj.isFunction(onChange)) onChange(cellsState.allCells)
+      if (!guideLinesVisible) setGuideLinesVisible(true)
+      if (timeoutToHideGuideLines.current) {
+        clearTimeout(timeoutToHideGuideLines.current)
+      }
+      timeoutToHideGuideLines.current = setTimeout(() => {
+        setGuideLinesVisible(false)
+      }, 400)
     }, [cellsState])
 
     useEffect(() => {

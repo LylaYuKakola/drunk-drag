@@ -45,6 +45,7 @@ export interface GuideLinePropsType {
   editorW:number,
   editorH:number,
   visible:boolean,
+  dispatcher: any,
 }
 
 export interface CellsStateType {

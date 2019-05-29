@@ -23,7 +23,7 @@ export default function () {
   }, [])
 
   const handleChangeEditor = (newCells) => {
-    console.log(newCells)
+    // console.log(newCells)
   }
 
   return (
