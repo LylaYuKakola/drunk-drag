@@ -8,8 +8,8 @@
  */
 
 import * as React from 'react'
-import { CellType } from '../../../../typings'
-import { MIN_WIDTH_OF_CELL, MIN_HEIGHT_OF_CELL } from '../../../../util/constVariables'
+import { CellType } from '../typings'
+import { MIN_WIDTH_OF_CELL, MIN_HEIGHT_OF_CELL } from '../util/constVariables'
 
 const { useCallback } = React
 

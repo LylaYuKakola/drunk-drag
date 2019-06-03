@@ -3,14 +3,13 @@
  */
 
 import * as React from 'react'
-import './index.scss'
 import { CellType, EditorType, MountedFunctionType } from '../../typings'
-import useCells from './uses/useCells'
+import useCells from '../../uses/useCells'
 import useGuider from '../../guider'
-import useShortcutKey from './uses/useShortcutKey'
+import useShortcutKey from '../../uses/useShortcutKey'
 import { getEditorId, getCellId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
-import useTouchedRelativePosition from './uses/useTouchedRelativePosition'
+import useTouchedRelativePosition from '../../uses/useTouchedRelativePosition'
 import * as tj from '../../util/typeJudgement'
 import deepCopy from '../../util/deepCopy'
 import Timeout = NodeJS.Timeout
@@ -43,12 +42,7 @@ export default function (onMounted?:MountedFunctionType) {
     const [isActiveEditor, setIsActiveEditor] = useState<boolean>(false)
     const [editorPanel, setEditorPanel] = useState<HTMLDivElement|null>(null)
 
-    const [cellsState, dispatchCellsState] = useCellsReducer(
-      deepCopy(cells.map((cell:CellType) => {
-        cell.id = getCellId(cell.id)
-        return cell
-      })),
-    )
+    const [cellsState, dispatchCellsState] = useCellsReducer(cells)
 
     const getTouchRelativePosition = useTouchedRelativePosition(editorPanel)
 

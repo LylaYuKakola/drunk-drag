@@ -1,6 +1,6 @@
 import * as React from 'react'
-import editor from './components/Page/editor'
-import viewer from './components/Page/viewer'
+import editor from './components/Editor'
+import viewer from './components/Viewer'
 import Elements from './components/Elements'
 import Commander from './commander'
 import * as tj from './util/typeJudgement'

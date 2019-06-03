@@ -6,9 +6,9 @@ import * as React from 'react'
 import { CellType, CellsStateType, ReducerActionType, ReducerPayloadType } from '../typings'
 import { getCellId } from '../util/guid'
 import * as tj from '../util/typeJudgement'
-import Timeout = NodeJS.Timeout;
+import Timeout = NodeJS.Timeout
 
-const { useState, useReducer, useCallback, useRef } = React
+const { useState, useReducer, useCallback, useRef, useEffect } = React
 
 type PositionType = [number, number]
 type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T
@@ -34,6 +34,10 @@ const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPositi
     }
     index -= 1
   }
+}
+
+const doUpdate:HandlerType = (prevState, payload) => {
+  return { allCells: payload.cells || [], selectedCells: [] }
 }
 
 const doClick:HandlerType = (prevState, payload) => {
@@ -199,13 +203,8 @@ const doLowest:HandlerType = (prevState, payload) => {
  * @param cells
  */
 export default function useCellsReducer(
-  cells: CellType[],
-) {
-  const initialState:CellsStateType = useState({
-    allCells: cells,
-    selectedCells: [],
-  })[0] // 完全非受控
-
+  cells: CellType[]|Promise<CellType[]>,
+):[any, any] {
   const revertedStack = useRef<string[]>([JSON.stringify(cells)])
   const timeoutToPushStack = useRef<Timeout>()
 
@@ -219,6 +218,9 @@ export default function useCellsReducer(
     actions.forEach((action: any) => {
       const { type, payload } = action
       switch (type) {
+        case 'update':
+          currentState = doUpdate(currentState, payload)
+          break
         case 'click':
           currentState = doClick(currentState, payload)
           break
@@ -270,6 +272,7 @@ export default function useCellsReducer(
     if (isAllCellsChanged) {
       timeoutToPushStack.current = setTimeout(() => {
         revertedStack.current.push(JSON.stringify(currentState.allCells))
+        if (revertedStack.current.length > 10) revertedStack.current.shift()
       }, 400)
     }
     return currentState
@@ -289,5 +292,19 @@ export default function useCellsReducer(
     }
   }, [])
 
-  return useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(reducer, {
+    allCells: [],
+    selectedCells: [],
+  })
+
+  useEffect(() => {
+    Promise.resolve(cells).then((c: CellType[]) => {
+      dispatch([{
+        type: 'update',
+        payload: { cells: c.map(cell => ({ id: getCellId(cell.id), ...cell })) },
+      }])
+    })
+  }, [])
+
+  return [state, dispatch]
 }

@@ -10,7 +10,6 @@ export default function () {
 
   const [pageWidth, setPageWidth] = useState(360)
   const [pageHeight, setPageHeight] = useState(640)
-  const [cells, setCells] = useState(initCells)
 
   const handleChangeWidth = useCallback(event => {
     const newValue = Number(event.target.value)
@@ -22,6 +21,16 @@ export default function () {
     setPageHeight(newValue || pageHeight)
   }, [])
 
+  const asyncCells = useCallback(() => {
+    return new Promise(resolve => {
+      fetch('http://mock.be.mi.com/mock/588/cells')
+        .then(res => res.json())
+        .then(res => {
+          resolve(res.data)
+        })
+    })
+  }, [])
+
   const handleChangeEditor = (newCells) => {
     // console.log(newCells)
   }
@@ -31,7 +40,7 @@ export default function () {
       <div className="test-editor">
         <Editor
           id="001"
-          cells={cells}
+          cells={asyncCells()}
           width={pageWidth}
           height={pageHeight}
           style={{ backgroundColor: '#ff8080' }}
@@ -49,7 +58,7 @@ export default function () {
       <div className="test-editor">
         <Editor
           id="002"
-          cells={cells}
+          cells={asyncCells()}
           width={pageWidth}
           height={pageHeight}
           style={{ backgroundColor: '#ff8080' }}

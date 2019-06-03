@@ -21,7 +21,7 @@ export interface CellType extends CommonElementPropsType {
 }
 
 export interface EditorType {
-  cells: CellType[],
+  cells: CellType[]|Promise<CellType[]>,
   height: number,
   width: number,
   style: any,
@@ -31,7 +31,7 @@ export interface EditorType {
 }
 
 export interface ViewerPropsType {
-  cells: CellType[],
+  cells: CellType[]|Promise<CellType[]>,
   height: number,
   width: number,
   style: any,
@@ -58,6 +58,7 @@ export interface ReducerPayloadType {
   data?: number[],
   cell?: CellType,
   direction?: string,
+  cells?: CellType[],
 }
 
 export interface ReducerActionType {

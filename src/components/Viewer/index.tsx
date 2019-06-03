@@ -4,8 +4,8 @@
 
 import * as React from 'react'
 import { CellType, ViewerPropsType, MountedFunctionType } from '../../typings'
-import useCells from './uses/useCells'
-import { getViewerId, getCellId } from '../../util/guid'
+import useCells from '../../uses/useCells'
+import { getViewerId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
 import deepCopy from '../../util/deepCopy'
 import * as tj from '../../util/typeJudgement'
@@ -28,12 +28,7 @@ export default function (onMounted?:MountedFunctionType) {
     const [parentSize, setParentSize] = useState<{width:number, height:number}>({ width:0, height:0 })
     const viewerRef = useRef<HTMLDivElement|null>(null)
 
-    const [cellsState, dispatchCellsState] = useCellsReducer(
-      deepCopy(cells.map((cell:CellType) => {
-        cell.id = getCellId(cell.id)
-        return cell
-      })),
-    ) // 非受控了...
+    const [cellsState, dispatchCellsState] = useCellsReducer(cells)
 
     // cell的渲染
     const cellDoms = useCells(cellsState, true)
@@ -74,6 +69,10 @@ export default function (onMounted?:MountedFunctionType) {
         if (onMounted && tj.isFunction(onMounted)) onMounted(viewerId)
       }
     }, [])
+
+    useEffect(() => {
+
+    }, [cells, parentSize.width, parentSize.height ])
 
     return [(
       <div

@@ -19,22 +19,21 @@ const getGetGetLine = (activeData:number[]) => (currentData:number[]) => (c:numb
     const top = Math.min(cTop, aTop)
     const height = cTop < aTop ? aBottom - cTop : cBottom - aTop
     return [
-      (<div style={{ height, top, left: a }} className="guideline-y" />),
-      (<div style={{ height, top, left: c }} className="guideline-y" />),
+      (<div style={{ height, top, left: a }} className="guideline-y-a" />),
+      (<div style={{ height, top, left: c }} className="guideline-y-c" />),
     ]
   }
 
   const left = Math.min(cLeft, aLeft)
   const width = cLeft < aLeft ? aRight - cLeft : cRight - aLeft
   return [
-    (<div style={{ width, left, top: a }} className="guideline-x" />),
-    (<div style={{ width, left, top: c }} className="guideline-x" />),
+    (<div style={{ width, left, top: a }} className="guideline-x-a" />),
+    (<div style={{ width, left, top: c }} className="guideline-x-c" />),
   ]
 }
 const judgementGetter = (lineGetter:any) => (cData:number[], a:number, direction:string) => {
   let result:any[] = null
   const isX = ['L', 'R'].includes(direction)
-  // const isLower = isX ? (direction === 'L') : (direction === 'T')
   cData.forEach((c:number) => {
     if (Math.abs(c - a) < MIN_DISTANCE) {
       result = lineGetter(c, a, isX)
@@ -51,8 +50,8 @@ function doGuide(
 ):any[] {
 
   if (!coordinate || !oldCoordinate || !allCells) return []
-  if (coordinate[2] <= coordinate[0] || coordinate[3] <= coordinate[1]) return []
-  if (oldCoordinate[2] <= oldCoordinate[0] || oldCoordinate[3] <= oldCoordinate[1]) return []
+  if (coordinate[2] < coordinate[0] || coordinate[3] < coordinate[1]) return []
+  if (oldCoordinate[2] < oldCoordinate[0] || oldCoordinate[3] < oldCoordinate[1]) return []
 
   const result = Array(4) // ax, cx, ay, cy
   const [aLeft, aTop, aRight, aBottom] = coordinate
@@ -128,5 +127,7 @@ export default function ({
     }
   }, [...activeCoordinate])
 
-  return visible ? doGuide(oldActiveCoordinate.current, activeCoordinate, allCells, selectedCells) : []
+  const lines = doGuide(oldActiveCoordinate.current, activeCoordinate, allCells, selectedCells)
+
+  return visible ? lines : []
 }

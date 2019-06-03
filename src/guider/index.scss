@@ -1,5 +1,5 @@
 .guideline  {
-  &-x {
+  &-x-c, &-x-a {
     position: absolute;
     width: 100%;
     height: 0;
@@ -7,12 +7,15 @@
     box-shadow: 0 0 1px rgba(0,0,0,0.1);
     z-index: 987654320;
   }
-  &-y {
+  &-y-c, &-y-a {
     position: absolute;
     width: 0;
     height: 100%;
     border-left: 1px dashed #fffb00;
     box-shadow: 0 0 1px 1px rgba(0,0,0,0.1);
     z-index: 987654320;
+  }
+  &-x-a, &-y-a {
+    border-color: #00c0ff;
   }
 }

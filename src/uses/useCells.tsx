@@ -3,8 +3,8 @@
  */
 
 import * as React from 'react'
-import Cell from '../../../Cell'
-import { CellsStateType } from '../../../../typings'
+import Cell from '../components/Cell'
+import { CellsStateType } from '../typings'
 
 const { useMemo } = React
 
