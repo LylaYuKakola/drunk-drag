@@ -64,7 +64,7 @@ export default function () {
 
   const asyncCells = useCallback(() => {
     return new Promise(resolve => {
-      fetch('http://mock.be.mi.com/mock/588/cells')
+      fetch()
         .then(res => res.json())
         .then(res => {
           resolve(res.data)
