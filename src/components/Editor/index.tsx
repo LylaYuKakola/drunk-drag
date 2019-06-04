@@ -7,11 +7,12 @@ import { CellType, EditorType, MountedFunctionType } from '../../typings'
 import useCells from '../../uses/useCells'
 import useGuider from '../../guider'
 import useShortcutKey from '../../uses/useShortcutKey'
-import { getEditorId, getCellId } from '../../util/guid'
+import { getEditorId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
 import useTouchedRelativePosition from '../../uses/useTouchedRelativePosition'
 import * as tj from '../../util/typeJudgement'
 import deepCopy from '../../util/deepCopy'
+import useCommander from '../../commander'
 import Timeout = NodeJS.Timeout
 
 const { useState, useRef, useEffect, useCallback, useLayoutEffect } = React
@@ -45,6 +46,23 @@ export default function (onMounted?:MountedFunctionType) {
     const [cellsState, dispatchCellsState] = useCellsReducer(cells)
 
     const getTouchRelativePosition = useTouchedRelativePosition(editorPanel)
+
+    const getCell = useCallback((ids?:string[]) => {
+      const allCells = deepCopy(cellsState.allCells)
+      if (!ids) return cellsState.allCells
+      if (tj.isArray(ids)) {
+        if (ids.length === 1) {
+          if (ids[0] === '__A_L_L__') {
+            return allCells
+          }
+          return allCells.find((cell:CellType) => ids[0] === cell.id)
+        }
+        return allCells.filter((cell:CellType) => ids.includes(cell.id))
+      }
+      return []
+    }, [cellsState])
+
+    const connectWithCommander = useCommander(dispatchCellsState, getCell)
 
     const handleClickOutside = useCallback((event:any) => {
       const path = event.path
@@ -149,21 +167,6 @@ export default function (onMounted?:MountedFunctionType) {
       dispatcher: dispatchCellsState,
     })
 
-    const getCell = useCallback((ids?:string[]) => {
-      const allCells = deepCopy(cellsState.allCells)
-      if (!ids) return cellsState.allCells
-      if (tj.isArray(ids)) {
-        if (ids.length === 1) {
-          if (ids[0] === '__A_L_L__') {
-            return allCells
-          }
-          return allCells.find((cell:CellType) => ids[0] === cell.id)
-        }
-        return allCells.filter((cell:CellType) => ids.includes(cell.id))
-      }
-      return []
-    }, [cellsState])
-
     // side effect 快捷键
     useShortcutKey({
       isActive: isActiveEditor,
@@ -196,7 +199,7 @@ export default function (onMounted?:MountedFunctionType) {
       }
     }, [])
 
-    return [(
+    return connectWithCommander(
       <div
         id={editorId}
         key={editorId}
@@ -213,7 +216,7 @@ export default function (onMounted?:MountedFunctionType) {
       >
         { cellDoms }
         { guideLines }
-      </div>
-    ), dispatchCellsState, getCell]
+      </div>,
+    )
   }
 }

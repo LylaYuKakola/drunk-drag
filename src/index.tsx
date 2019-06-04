@@ -2,9 +2,19 @@ import * as React from 'react'
 import editor from './components/Editor'
 import viewer from './components/Viewer'
 import Elements from './components/Elements'
-import Commander from './commander'
 import * as tj from './util/typeJudgement'
 import '../font/iconfont.css'
+
+export interface DrunkDragType {
+  registerElement: any,
+  unregisterElement: any,
+  hasElement: any,
+  getAllElementKeys: any,
+  getViewer: any,
+  getEditor: any,
+  Editor: any,
+  Viewer: any,
+}
 
 const cache = {
   elementsPool: new Set(Object.keys(Elements)),
@@ -51,17 +61,6 @@ const getAllElementKeys = () => {
 const mountViewer = (id:string) => cache.viewerInstancesMap.delete(id)
 const mountEditor = (id:string) => cache.editorInstancesMap.delete(id)
 
-export interface DrunkDragType {
-  registerElement: any,
-  unregisterElement: any,
-  hasElement: any,
-  getAllElementKeys: any,
-  getViewer: any,
-  getEditor: any,
-  Editor: any,
-  Viewer: any,
-}
-
 const $DD = Object.freeze({
   registerElement,
   unregisterElement,
@@ -71,36 +70,18 @@ const $DD = Object.freeze({
   getEditor: (id:string) => cache.editorInstancesMap.get(id) || null,
   Editor: new Proxy(editor(mountEditor), {
     apply (target, ctx, args) {
-      const [newEditorInstance, dispatch, getCell] = Reflect.apply(target, ctx, args)
+      const newEditorInstance = Reflect.apply(target, ctx, args)
       const id = newEditorInstance.ref.current ? newEditorInstance.ref.current.id : null
-      const commander = Commander(dispatch, getCell)
-
-      const result = new Proxy(newEditorInstance, {
-        get(target, key:string, receiver) {
-          if (commander[key]) return Reflect.get(commander, key, receiver)
-          return Reflect.get(target, key, receiver)
-        },
-      })
-
-      cache.editorInstancesMap.set(id, result)
+      cache.editorInstancesMap.set(id, newEditorInstance)
       return newEditorInstance
     },
   }),
   Viewer: new Proxy(viewer(mountViewer), {
     apply (target, ctx, args) {
-      const [newViewerInstance, dispatch, getCell] = Reflect.apply(target, ctx, args)
+      const newViewerInstance = Reflect.apply(target, ctx, args)
       const id = newViewerInstance.ref.current ? newViewerInstance.ref.current.id : null
-      const commander = Commander(dispatch, getCell)
-
-      const result = new Proxy(newViewerInstance, {
-        get(target, key:string, receiver) {
-          if (commander[key]) return Reflect.get(commander, key, receiver)
-          return Reflect.get(target, key, receiver)
-        },
-      })
-
-      cache.viewerInstancesMap.set(id, result)
-      return result
+      cache.viewerInstancesMap.set(id, newViewerInstance)
+      return newViewerInstance
     },
   }),
 })

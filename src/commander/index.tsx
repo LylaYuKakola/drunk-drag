@@ -3,6 +3,7 @@
  */
 
 import * as React from 'react'
+
 import { ReducerActionType, CellType } from '../typings'
 
 type DispatchType = (actions: ReducerActionType[]) => void
@@ -30,127 +31,140 @@ export interface CommandsType {
   [key:string]: any,
 }
 
+const { useMemo, useCallback } = React
+
 /**
  * 指令方法
  * @param dispatch 执行cell相关操作的方法
  * @param cellGetter cell的获取方法
  */
-export default function commander(dispatch:DispatchType, cellGetter:CellGetterType):CommandsType {
-  return Object.freeze({
-    cell(id) {
-      return cellGetter(id ? [id] : [])
-    },
-    cells(ids) {
-      return cellGetter(ids ? ids : ['__A_L_L__'])
-    },
-    resize(id, data) {
-      const [top, right, bottom, left] = data
-      dispatch([{
-        type: 'select',
-        payload: {
-          keys: [id],
-        },
-      }, {
-        type: 'resize',
-        payload: {
-          keys: [id],
-          data: [-top, -left],
-          direction: 'lt',
-        },
-      }, {
-        type: 'resize',
-        payload: {
-          keys: [id],
-          data: [right, bottom],
-          direction: 'rb',
-        },
-      }])
-    },
-    resizeTo(id, data) {
-      const [top, right, bottom, left] = data
-      const cell = cellGetter(id ? [id] : [])
-      if (!cell) return
-      const { x, y, w, h } = cell
-      dispatch([{
-        type: 'select',
-        payload: {
-          keys: [id],
-        },
-      }, {
-        type: 'resize',
-        payload: {
-          keys: [id],
-          data: [top - x, left - y],
-          direction: 'lt',
-        },
-      }, {
-        type: 'resize',
-        payload: {
-          keys: [id],
-          data: [right - (x + w), bottom - (y + h)],
-          direction: 'rb',
-        },
-      }])
-    },
-    move(id, data) {
-      const [moveX, moveY] = data
-      dispatch([{
-        type: 'select',
-        payload: {
-          keys: [id],
-        },
-      }, {
-        type: 'move',
-        payload: {
-          keys: [id],
-          data: [moveX, moveY],
-          direction: 'lt',
-        },
-      }])
-    },
-    moveTo(id, data) {
-      const [moveToX, moveToY] = data
-      const cell = cellGetter(id ? [id] : [])
-      if (!cell) return
-      const { x, y } = cell
-      dispatch([{
-        type: 'select',
-        payload: {
-          keys: [id],
-        },
-      }, {
-        type: 'move',
-        payload: {
-          keys: [id],
-          data: [moveToX - x, moveToY - y],
-        },
-      }])
-    },
-    add(cell) {
-      dispatch([{
-        type: 'add',
-        payload: { cell },
-      }])
-    },
-    delete(ids) {
-      dispatch([{
-        type: 'select',
-        payload: {
-          keys: ids ? ids : [],
-        },
-      }, {
-        type: 'delete',
-      }])
-    },
-    clean() {
-      dispatch([{
-        type: 'clean',
-      }])
-    },
-    revert() {
-      dispatch([{
-        type: 'revert',
-      }])
-    },
-  })
+export default function useCommander(dispatch:DispatchType, cellGetter:CellGetterType) {
+  const commander = useMemo<CommandsType>(() => {
+    return Object.freeze({
+      cell(id) {
+        return cellGetter(id ? [id] : [])
+      },
+      cells(ids) {
+        return cellGetter(ids ? ids : ['__A_L_L__'])
+      },
+      resize(id, data) {
+        const [top, right, bottom, left] = data
+        dispatch([{
+          type: 'select',
+          payload: {
+            keys: [id],
+          },
+        }, {
+          type: 'resize',
+          payload: {
+            keys: [id],
+            data: [-top, -left],
+            direction: 'lt',
+          },
+        }, {
+          type: 'resize',
+          payload: {
+            keys: [id],
+            data: [right, bottom],
+            direction: 'rb',
+          },
+        }])
+      },
+      resizeTo(id, data) {
+        const [top, right, bottom, left] = data
+        const cell = cellGetter(id ? [id] : [])
+        if (!cell) return
+        const { x, y, w, h } = cell
+        dispatch([{
+          type: 'select',
+          payload: {
+            keys: [id],
+          },
+        }, {
+          type: 'resize',
+          payload: {
+            keys: [id],
+            data: [top - x, left - y],
+            direction: 'lt',
+          },
+        }, {
+          type: 'resize',
+          payload: {
+            keys: [id],
+            data: [right - (x + w), bottom - (y + h)],
+            direction: 'rb',
+          },
+        }])
+      },
+      move(id, data) {
+        const [moveX, moveY] = data
+        dispatch([{
+          type: 'select',
+          payload: {
+            keys: [id],
+          },
+        }, {
+          type: 'move',
+          payload: {
+            keys: [id],
+            data: [moveX, moveY],
+            direction: 'lt',
+          },
+        }])
+      },
+      moveTo(id, data) {
+        const [moveToX, moveToY] = data
+        const cell = cellGetter(id ? [id] : [])
+        if (!cell) return
+        const { x, y } = cell
+        dispatch([{
+          type: 'select',
+          payload: {
+            keys: [id],
+          },
+        }, {
+          type: 'move',
+          payload: {
+            keys: [id],
+            data: [moveToX - x, moveToY - y],
+          },
+        }])
+      },
+      add(cell) {
+        dispatch([{
+          type: 'add',
+          payload: { cell },
+        }])
+      },
+      delete(ids) {
+        dispatch([{
+          type: 'select',
+          payload: {
+            keys: ids ? ids : [],
+          },
+        }, {
+          type: 'delete',
+        }])
+      },
+      clean() {
+        dispatch([{
+          type: 'clean',
+        }])
+      },
+      revert() {
+        dispatch([{
+          type: 'revert',
+        }])
+      },
+    })
+  }, [dispatch, cellGetter])
+
+  return useCallback((reactElement:any) => {
+    return new Proxy(reactElement, {
+      get(target, key:string, receiver) {
+        if (commander[key]) return Reflect.get(commander, key, receiver)
+        return Reflect.get(target, key, receiver)
+      },
+    })
+  }, [commander])
 }

@@ -9,6 +9,7 @@ import { getViewerId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
 import deepCopy from '../../util/deepCopy'
 import * as tj from '../../util/typeJudgement'
+import useCommander from '../../commander'
 
 const { useState, useLayoutEffect, useRef, useEffect, useCallback } = React
 
@@ -29,6 +30,22 @@ export default function (onMounted?:MountedFunctionType) {
     const viewerRef = useRef<HTMLDivElement|null>(null)
 
     const [cellsState, dispatchCellsState] = useCellsReducer(cells)
+    const getCell = useCallback((ids?:string[]) => {
+      const allCells = deepCopy(cellsState.allCells)
+      if (!ids) return cellsState.allCells
+      if (tj.isArray(ids)) {
+        if (ids.length === 1) {
+          if (ids[0] === '__A_L_L__') {
+            return allCells
+          }
+          return allCells.find((cell:CellType) => ids[0] === cell.id)
+        }
+        return allCells.filter((cell:CellType) => ids.includes(cell.id))
+      }
+      return []
+    }, [cellsState])
+
+    const connectWithCommander = useCommander(dispatchCellsState, getCell)
 
     // cell的渲染
     const cellDoms = useCells(cellsState, true)
@@ -49,21 +66,6 @@ export default function (onMounted?:MountedFunctionType) {
       purePageContainerDom = null
     }, [viewerRef.current])
 
-    const getCell = useCallback((ids?:string[]) => {
-      const allCells = deepCopy(cellsState.allCells)
-      if (!ids) return cellsState.allCells
-      if (tj.isArray(ids)) {
-        if (ids.length === 1) {
-          if (ids[0] === '__A_L_L__') {
-            return allCells
-          }
-          return allCells.find((cell:CellType) => ids[0] === cell.id)
-        }
-        return allCells.filter((cell:CellType) => ids.includes(cell.id))
-      }
-      return []
-    }, [cellsState])
-
     useEffect(() => {
       return () => {
         if (onMounted && tj.isFunction(onMounted)) onMounted(viewerId)
@@ -72,9 +74,9 @@ export default function (onMounted?:MountedFunctionType) {
 
     useEffect(() => {
 
-    }, [cells, parentSize.width, parentSize.height ])
+    }, [cells, parentSize.width, parentSize.height])
 
-    return [(
+    return connectWithCommander(
       <div
         id={viewerId}
         key={viewerId}
@@ -92,8 +94,8 @@ export default function (onMounted?:MountedFunctionType) {
         }}
       >
         { cellDoms }
-      </div>
-    ), dispatchCellsState, getCell]
+      </div>,
+    )
   }
 }
 
