@@ -4,7 +4,8 @@
 
 import * as React from 'react'
 
-import { ReducerActionType, CellType } from '../typings'
+import { ReducerActionType, CellType, CellsStateType } from '../typings'
+import deepCopy from '../util/deepCopy'
 
 type DispatchType = (actions: ReducerActionType[]) => void
 type CellGetterType = (ids: string[]) => any
@@ -35,17 +36,25 @@ const { useMemo, useCallback } = React
 
 /**
  * 指令方法
- * @param dispatch 执行cell相关操作的方法
- * @param cellGetter cell的获取方法
+ * @param cellsState
+ * @param dispatch
  */
-export default function useCommander(dispatch:DispatchType, cellGetter:CellGetterType) {
+export default function useCommander(cellsState:CellsStateType, dispatch:DispatchType) {
+
+  const getCells = useCallback<CellGetterType>((ids) => {
+    if (!cellsState.allCells || !cellsState.allCells.length) return []
+    return deepCopy(
+      cellsState.allCells.filter((cell:CellType) => ids.includes(cell.id)),
+    )
+  }, [cellsState.allCells])
+
   const commander = useMemo<CommandsType>(() => {
     return Object.freeze({
       cell(id) {
-        return cellGetter(id ? [id] : [])
+        return getCells([id])[0] || null
       },
       cells(ids) {
-        return cellGetter(ids ? ids : ['__A_L_L__'])
+        return getCells(ids)
       },
       resize(id, data) {
         const [top, right, bottom, left] = data
@@ -72,7 +81,7 @@ export default function useCommander(dispatch:DispatchType, cellGetter:CellGette
       },
       resizeTo(id, data) {
         const [top, right, bottom, left] = data
-        const cell = cellGetter(id ? [id] : [])
+        const cell = getCells([id])[0] || null
         if (!cell) return
         const { x, y, w, h } = cell
         dispatch([{
@@ -114,7 +123,7 @@ export default function useCommander(dispatch:DispatchType, cellGetter:CellGette
       },
       moveTo(id, data) {
         const [moveToX, moveToY] = data
-        const cell = cellGetter(id ? [id] : [])
+        const cell = getCells([id])[0] || null
         if (!cell) return
         const { x, y } = cell
         dispatch([{
@@ -157,7 +166,7 @@ export default function useCommander(dispatch:DispatchType, cellGetter:CellGette
         }])
       },
     })
-  }, [dispatch, cellGetter])
+  }, [dispatch, getCells])
 
   return useCallback((reactElement:any) => {
     return new Proxy(reactElement, {

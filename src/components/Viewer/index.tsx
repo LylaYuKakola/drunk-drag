@@ -30,22 +30,8 @@ export default function (onMounted?:MountedFunctionType) {
     const viewerRef = useRef<HTMLDivElement|null>(null)
 
     const [cellsState, dispatchCellsState] = useCellsReducer(cells)
-    const getCell = useCallback((ids?:string[]) => {
-      const allCells = deepCopy(cellsState.allCells)
-      if (!ids) return cellsState.allCells
-      if (tj.isArray(ids)) {
-        if (ids.length === 1) {
-          if (ids[0] === '__A_L_L__') {
-            return allCells
-          }
-          return allCells.find((cell:CellType) => ids[0] === cell.id)
-        }
-        return allCells.filter((cell:CellType) => ids.includes(cell.id))
-      }
-      return []
-    }, [cellsState])
 
-    const connectWithCommander = useCommander(dispatchCellsState, getCell)
+    const connectWithCommander = useCommander(cellsState, dispatchCellsState)
 
     // cell的渲染
     const cellDoms = useCells(cellsState, true)
