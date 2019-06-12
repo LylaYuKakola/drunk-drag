@@ -4,6 +4,7 @@ import viewer from './components/Viewer'
 import Elements from './components/Elements'
 import * as tj from './util/typeJudgement'
 import '../font/iconfont.css'
+import { warn } from './logger'
 
 export interface DrunkDragType {
   registerElement: any,
@@ -28,7 +29,7 @@ const registerElement = (elements:any) => {
     const elementComponent = elements[key]
 
     if (!(tj.isFunction(elementComponent))) {
-      console.warn(`"${key}" cannot be registered, because it's not a React component`)
+      warn(`"${key}" cannot be registered, because it's not a React component`)
       return
     }
 
@@ -61,7 +62,7 @@ const getAllElementKeys = () => {
 const mountViewer = (id:string) => cache.viewerInstancesMap.delete(id)
 const mountEditor = (id:string) => cache.editorInstancesMap.delete(id)
 
-const $DD = Object.freeze({
+const $D = Object.freeze({
   registerElement,
   unregisterElement,
   hasElement,
@@ -87,6 +88,6 @@ const $DD = Object.freeze({
 })
 
 // @ts-ignore
-if (window) window['$DD'] = $DD
+if (window) window['$D'] = $D
 
-export default $DD
+export default $D

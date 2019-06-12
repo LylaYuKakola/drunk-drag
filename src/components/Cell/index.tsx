@@ -22,16 +22,16 @@ interface CellStyleType {
  */
 export default function (cell:CellType) {
   const {
-    w, h, x, y, type, style, contentProps, isSelected, isViewer, id,
+    w, h, x, y, type, style, isSelected, isViewer, id,
   } = cell
 
   const content = useMemo<any|null>(() => {
     const component = Elements[type]
     return component({
       isViewer,
-      ...contentProps,
+      ...cell,
     })
-  }, [type, contentProps, isViewer])
+  }, [cell])
 
   const cellStyle = useMemo<CellStyleType>(() => ({
     top: y || 0,

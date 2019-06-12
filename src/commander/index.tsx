@@ -43,6 +43,7 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
 
   const getCells = useCallback<CellGetterType>((ids) => {
     if (!cellsState.allCells || !cellsState.allCells.length) return []
+    if (!ids) return deepCopy(cellsState.allCells)
     return deepCopy(
       cellsState.allCells.filter((cell:CellType) => ids.includes(cell.id)),
     )
@@ -168,10 +169,11 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
     })
   }, [dispatch, getCells])
 
-  return useCallback((reactElement:any) => {
+  return useCallback((reactElement:any, extra?:any) => {
     return new Proxy(reactElement, {
       get(target, key:string, receiver) {
         if (commander[key]) return Reflect.get(commander, key, receiver)
+        if (extra && extra[key]) return Reflect.get(extra, key, receiver)
         return Reflect.get(target, key, receiver)
       },
     })

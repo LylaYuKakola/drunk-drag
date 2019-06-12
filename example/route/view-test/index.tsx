@@ -8,9 +8,10 @@ const { Viewer }:DrunkDragType = DD
 
 export default function () {
 
-  const [pageWidth, setPageWidth] = useState(360)
-  const [pageHeight, setPageHeight] = useState(640)
+  const [pageWidth, setPageWidth] = useState(800)
+  const [pageHeight, setPageHeight] = useState(600)
   const [cells, setCells] = useState(initCells)
+  const viewer = useRef(null)
   const arrow = useRef({
     left: false,
     right: false,
@@ -33,7 +34,9 @@ export default function () {
   }
 
   const handleKeyDown = useCallback(event => {
-    const viewer = window.$DD.getViewer('001')
+    if (!viewer.current) {
+      viewer.current = window.$D.getViewer('001')
+    }
     let [x, y] = [0, 0]
     if (event.key === 'ArrowUp') arrow.current.up = true
     if (event.key === 'ArrowDown') arrow.current.down = true
@@ -43,7 +46,7 @@ export default function () {
     if (arrow.current.right) x = 1
     if (arrow.current.up) y = -1
     if (arrow.current.down) y = 1
-    viewer.move('cell2', [x, y])
+    viewer.current.move('cell2', [x, y])
   }, [])
 
   const handleKeyUp = useCallback(event => {
@@ -63,13 +66,7 @@ export default function () {
   }, [])
 
   const asyncCells = useCallback(() => {
-    return new Promise(resolve => {
-      fetch()
-        .then(res => res.json())
-        .then(res => {
-          resolve(res.data)
-        })
-    })
+    return initCells
   }, [])
 
   return (

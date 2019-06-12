@@ -4,7 +4,6 @@
 
 export interface CommonElementPropsType {
   isViewer?: boolean,
-  contentProps?: any,
 }
 
 export interface CellType extends CommonElementPropsType {
@@ -35,7 +34,6 @@ export interface ViewerPropsType {
   height: number,
   width: number,
   style: any,
-  isSingleScreen: boolean,
   id: string,
 }
 

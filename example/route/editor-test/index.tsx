@@ -22,13 +22,14 @@ export default function () {
   }, [])
 
   const asyncCells = useCallback(() => {
-    return new Promise(resolve => {
-      fetch()
-        .then(res => res.json())
-        .then(res => {
-          resolve(res.data)
-        })
-    })
+    // return new Promise(resolve => {
+    //   fetch()
+    //     .then(res => res.json())
+    //     .then(res => {
+    //       resolve(res.data)
+    //     })
+    // })
+    return initCells
   }, [])
 
   const handleChangeEditor = (newCells) => {
