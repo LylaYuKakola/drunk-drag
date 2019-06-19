@@ -1,5 +1,10 @@
 /**
- * @desc cells的相关操作，核心
+ * @desc 针对cell的核心操作
+ *
+ * 包括点击
+ * 选中、移动、伸缩、删除、新增、清空所有cell、cell在z轴上下浮动的操作
+ *
+ * 不对外开放的操作，更新editor和viewer的唯一方式！！！！！！！
  */
 
 import * as React from 'react'
@@ -8,7 +13,7 @@ import { getCellId } from '../util/guid'
 import * as tj from '../util/typeJudgement'
 import Timeout = NodeJS.Timeout
 
-const { useState, useReducer, useCallback, useRef, useEffect } = React
+const { useReducer, useCallback, useRef, useEffect } = React
 
 type PositionType = [number, number]
 type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T

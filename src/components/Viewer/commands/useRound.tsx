@@ -4,7 +4,7 @@ import { CellsStateType, CellType, ReducerActionType } from '../../../typings'
 const { useState, useMemo, useCallback } = React
 const MIN_FLEX_HEIGHT = 2
 
-interface ExtraCommanderForViewerType {
+interface CommanderRound {
   parentSize: {width:number, height:number},
   width: number,
   height: number,
@@ -12,9 +12,9 @@ interface ExtraCommanderForViewerType {
   dispatchCellsState: (actions:ReducerActionType[]) => void
 }
 
-export default function useExtraCommanderForViewer({
+export default function useCommanderRound({
   parentSize, width, height, cellsState, dispatchCellsState,
-}: ExtraCommanderForViewerType) {
+}: CommanderRound) {
   const [isRounded, setIsRounded] = useState(false)
 
   const round = useCallback(() => {

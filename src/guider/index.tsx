@@ -1,5 +1,5 @@
 /**
- * @desc 指导拖拽，显示标线
+ * @desc 指导拖拽，显示标线，为editor而服务
  */
 
 import * as React from 'react'
@@ -101,6 +101,7 @@ function doGuide(
   return result
 }
 
+// @TODO 还没想好dispatcher怎么用
 export default function ({
   allCells, selectedCells, editorH, editorW, visible, dispatcher,
 }: GuideLinePropsType) {

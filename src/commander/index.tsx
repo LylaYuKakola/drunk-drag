@@ -1,5 +1,20 @@
 /**
- * @desc 没什么可说的
+ * @desc 提供editor、viewer和指令的挂接函数，同时规定部分editor和viewer组件实例的基本指令
+ *
+ * **以下提到的组件指的是editor和viewer的实例**
+ *
+ * 通过导出的connect方法和组件实例进行连接，开放给使用者一些操作组件内容的方法
+ * 包括以下：
+ * - 获取组件内的cell或者cells
+ * - 修改对应cell的宽高
+ * - 移动cell位置
+ * - 增加/删除cell
+ * - 清空所有cell
+ *
+ * 这些commander实际上通过执行dispatcher来修改组件
+ *
+ * 针对不同的组件（editor/viewer）有不同的扩展commander，在对应的组件代码目录下
+ * commander是唯一从外部更新组件的方式！！！！！！
  */
 
 import * as React from 'react'

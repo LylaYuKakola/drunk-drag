@@ -1,5 +1,5 @@
 /**
- * @desc 编辑面板
+ * @desc 展示面板
  */
 
 import * as React from 'react'
