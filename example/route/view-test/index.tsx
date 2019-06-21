@@ -1,10 +1,10 @@
 import * as React from 'react'
-import DD, { DrunkDragType } from '../../../src'
+import $D from '../../../src'
 import initCells from '../../config'
 import './index.scss'
 
 const { useState, useCallback, useRef, useEffect } = React
-const { Viewer }:DrunkDragType = DD
+const { Viewer } = $D
 
 export default function () {
 
@@ -34,9 +34,7 @@ export default function () {
   }
 
   const handleKeyDown = useCallback(event => {
-    if (!viewer.current) {
-      viewer.current = window.$D.getViewer('001')
-    }
+    viewer.current = $D('viewer', '001')
     let [x, y] = [0, 0]
     if (event.key === 'ArrowUp') arrow.current.up = true
     if (event.key === 'ArrowDown') arrow.current.down = true
@@ -72,15 +70,15 @@ export default function () {
   return (
     <div className="test">
       <div className="test-viewer">
-      <Viewer
-        id="001"
-        cells={asyncCells()}
-        width={pageWidth}
-        height={pageHeight}
-        style={{ backgroundColor: '#ff8080' }}
-        isSingleScreen={true}
-      />
-    </div>
+        <Viewer
+          id="001"
+          cells={asyncCells()}
+          width={pageWidth}
+          height={pageHeight}
+          style={{ backgroundColor: '#ff8080' }}
+          isSingleScreen={true}
+        />
+      </div>
     </div>
   )
 }

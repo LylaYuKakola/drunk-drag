@@ -4,7 +4,7 @@
 
 import * as React from 'react'
 import './index.scss'
-import Elements from '../Elements'
+import contents from '../../contents'
 import { CellType } from '../../typings'
 
 const { useMemo } = React
@@ -26,7 +26,7 @@ export default function (cell:CellType) {
   } = cell
 
   const content = useMemo<any|null>(() => {
-    const component = Elements[type]
+    const component = contents[type]
     return component({
       isViewer,
       ...cell,
@@ -40,7 +40,7 @@ export default function (cell:CellType) {
     height: h || 0,
   }), [w, h, x, y])
 
-  return (
+  return useMemo(() => (
     <div
       style={cellStyle}
       className="cell"
@@ -105,5 +105,5 @@ export default function (cell:CellType) {
         ])
       }
     </div>
-  )
+  ), [w, h, cellStyle, id, style, isSelected, isViewer, content])
 }

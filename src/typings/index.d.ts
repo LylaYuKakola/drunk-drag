@@ -65,3 +65,14 @@ export interface ReducerActionType {
 }
 
 export type MountedFunctionType = (id:string) => void
+
+export interface DrunkDragType {
+  registerElement: any,
+  unregisterElement: any,
+  hasElement: any,
+  getAllElementKeys: any,
+  getViewer: any,
+  getEditor: any,
+  Editor: any,
+  Viewer: any,
+}

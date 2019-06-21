@@ -2,12 +2,25 @@
  * @desc 打印错误
  */
 
-export const log = (msg:string) => {
-  console.log('tip:\n', msg)
+export class NormalError extends Error {
+  constructor(message:string) {
+    super(message)
+    this.name = 'normal'
+  }
 }
-export const warn = (msg:string) => {
-  console.warn('warn:\n', msg)
+
+export const log = (e:Error|string, withStack = false) => {
+  const error = typeof e !== 'string' ? e : new NormalError(e)
+  console.log(`${error.name}:`, error.message)
+  if (withStack) console.log(error.stack)
 }
-export const error = (msg:string) => {
-  console.error('error:\n', msg)
+export const warn = (e:Error|string, withStack = false) => {
+  const error = typeof e !== 'string' ? e : new NormalError(e)
+  console.warn(`${error.name}:`, error.message)
+  if (withStack) console.warn(error.stack)
+}
+export const error = (e:Error|string, withStack = false) => {
+  const error = typeof e !== 'string' ? e : new NormalError(e)
+  console.error(`${error.name}:`, error.message)
+  if (withStack) console.error(error.stack)
 }

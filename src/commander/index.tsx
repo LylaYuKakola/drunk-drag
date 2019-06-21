@@ -19,7 +19,7 @@
 
 import * as React from 'react'
 
-import { ReducerActionType, CellType, CellsStateType } from '../typings'
+import { ReducerActionType, CellsStateType, CellType } from '../typings'
 import deepCopy from '../util/deepCopy'
 
 type DispatchType = (actions: ReducerActionType[]) => void
@@ -47,14 +47,18 @@ export interface CommandsType {
   [key:string]: any,
 }
 
-const { useMemo, useCallback } = React
+const { useMemo, useCallback, useEffect } = React
+
+export const commanders = new Map()
 
 /**
  * 指令方法
+ * @param componentId
  * @param cellsState
  * @param dispatch
+ * @param extra
  */
-export default function useCommander(cellsState:CellsStateType, dispatch:DispatchType) {
+export default function useCommander(componentId:string, cellsState:CellsStateType, dispatch:DispatchType, extra?:any) {
 
   const getCells = useCallback<CellGetterType>((ids) => {
     if (!cellsState.allCells || !cellsState.allCells.length) return []
@@ -66,13 +70,14 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
 
   const commander = useMemo<CommandsType>(() => {
     return Object.freeze({
-      cell(id) {
+      ...(extra || {}),
+      cell(id:string) {
         return getCells([id])[0] || null
       },
-      cells(ids) {
+      cells(ids:string[]) {
         return getCells(ids)
       },
-      resize(id, data) {
+      resize(id:string, data:number[]) {
         const [top, right, bottom, left] = data
         dispatch([{
           type: 'select',
@@ -95,7 +100,7 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
           },
         }])
       },
-      resizeTo(id, data) {
+      resizeTo(id:string, data:number[]) {
         const [top, right, bottom, left] = data
         const cell = getCells([id])[0] || null
         if (!cell) return
@@ -121,7 +126,7 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
           },
         }])
       },
-      move(id, data) {
+      move(id:string, data:number[]) {
         const [moveX, moveY] = data
         dispatch([{
           type: 'select',
@@ -137,7 +142,7 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
           },
         }])
       },
-      moveTo(id, data) {
+      moveTo(id:string, data:number[]) {
         const [moveToX, moveToY] = data
         const cell = getCells([id])[0] || null
         if (!cell) return
@@ -155,13 +160,13 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
           },
         }])
       },
-      add(cell) {
+      add(cell:CellType) {
         dispatch([{
           type: 'add',
           payload: { cell },
         }])
       },
-      delete(ids) {
+      delete(ids:string[]) {
         dispatch([{
           type: 'select',
           payload: {
@@ -182,15 +187,12 @@ export default function useCommander(cellsState:CellsStateType, dispatch:Dispatc
         }])
       },
     })
-  }, [dispatch, getCells])
+  }, [dispatch, getCells, extra])
 
-  return useCallback((reactElement:any, extra?:any) => {
-    return new Proxy(reactElement, {
-      get(target, key:string, receiver) {
-        if (commander[key]) return Reflect.get(commander, key, receiver)
-        if (extra && extra[key]) return Reflect.get(extra, key, receiver)
-        return Reflect.get(target, key, receiver)
-      },
-    })
-  }, [commander])
+  useEffect(() => {
+    commanders.set(componentId, commander)
+    return () => {
+      commanders.delete(componentId)
+    }
+  }, [componentId, commander])
 }
