@@ -3,15 +3,69 @@
  */
 
 import * as React from 'react'
-import { ViewerPropsType } from '../../typings'
+import { CellType, ViewerPropsType } from '../../typings'
 import useCells from '../../uses/useCells'
 import useConstantState from '../../uses/useConstantState'
 import { getViewerId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
 import useCommander from '../../commander'
-import useRound from './commands/useRound'
 
-const { useState, useLayoutEffect, useRef, useMemo } = React
+const { useState, useLayoutEffect, useRef, useEffect, useMemo } = React
+
+const MIN_FLEX_HEIGHT = 2
+
+const doRound:(
+  cells: CellType[],
+  parentWidth:number,
+  parentHeight:number,
+  width:number,
+  height:number,
+) => CellType[] = (cells, parentWidth, parentHeight, width, height) => {
+  if (!cells.length) return []
+  const roundHeight = height - (width / parentWidth) * parentHeight
+  const flexBlocks:[number, number][] = [[0, height]]
+  cells
+    .sort((curr:CellType, next:CellType) => curr.y < next.y ? -1 : 1)
+    .forEach((cell: CellType) => {
+      const { y: cy, h: ch } = cell
+      const [fy, fh] = flexBlocks[flexBlocks.length - 1]
+      const lastIndex = flexBlocks.length - 1
+      if ((cy + ch) <= fy) return
+      if (cy >= (fy + fh)) return
+      if (cy <= fy && (cy + ch) > fy && (cy + ch) < (fy + fh)) {
+        flexBlocks[lastIndex] = [cy + ch, (fy + fh) - (cy + ch)]
+        return
+      }
+      if (cy <= fy && (cy + ch) > fy && (cy + ch) >= (fy + fh)) {
+        flexBlocks.pop()
+        return
+      }
+      if (cy > fy && (cy + ch) < (fy + fh)) {
+        flexBlocks[lastIndex] = [fy, cy - fy]
+        flexBlocks.push([cy + ch, (fy + fh) - (cy + ch)])
+        return
+      }
+      if (cy > fy && (cy + ch) >= (fy + fh)) {
+        flexBlocks[lastIndex] = [fy, cy - fy]
+        return
+      }
+    })
+
+  const allFlexBlocksHeight:number = flexBlocks.reduce((prev, curr) => [0, prev[1] + curr[1]])[1]
+  flexBlocks.forEach(([fy, fh]) => {
+    let flexHeight = Math.round((fh / allFlexBlocksHeight) * roundHeight)
+    if ((fh - flexHeight) < MIN_FLEX_HEIGHT) {
+      flexHeight = fh - MIN_FLEX_HEIGHT
+    }
+    cells.forEach((cell:CellType) => {
+      const { y } = cell
+      if ((fy + (fh - flexHeight)) < y) {
+        cell.y = y - flexHeight
+      }
+    })
+  })
+  return [...cells]
+}
 
 /**
  * 展示面板组件
@@ -20,41 +74,69 @@ const { useState, useLayoutEffect, useRef, useMemo } = React
  * @param cells 面板内容
  * @param id 面板id
  * @param style 面板扩展样式
+ * @param noScroll
  */
-export default function viewer({ cells, height, width, style, id }:ViewerPropsType) {
+export default function viewer({ cells, height, width, style, id, noScroll = false }:ViewerPropsType) {
   const viewerId = useConstantState(getViewerId(id)) // id设置为常量
   const [parentSize, setParentSize] = useState<{width:number, height:number}>({ width:0, height:0 })
   const viewerRef = useRef<HTMLDivElement|null>(null)
   const [cellsState, dispatchCellsState] = useCellsReducer(cells)
   const cellDoms = useCells(cellsState, true)
+  const isRounded = useRef(false)
+  const viewerStyle = useMemo(() => {
+    const h = !noScroll ? height :
+      parentSize.width ? (width / parentSize.width) * parentSize.height :
+        0
+    return {
+      ...style,
+      width,
+      height: h,
+      overflowX: 'hidden',
+      overflowY: noScroll ? 'hidden' : 'auto',
+      transform: `scale(${parentSize.width / (width || 1)})`,
+      position: 'relative',
+      transformOrigin: 'left top',
+    }
+  }, [
+    style, width, height,
+    parentSize.width, parentSize.height,
+    noScroll,
+  ])
 
-  // extra commands
-  const [isRounded, round] = useRound({
-    parentSize,
-    width,
-    height,
-    cellsState,
-    dispatchCellsState,
-  })
+  useCommander(`viewer-${viewerId}`, cellsState, dispatchCellsState)
 
-  const extra = useMemo(() => ({ round }), [round])
-  useCommander(`viewer-${viewerId}`, cellsState, dispatchCellsState, extra)
+  useEffect(() => {
+    if (!noScroll || isRounded.current) return
+    if (
+      cellsState.allCells.length &&
+      parentSize.width &&
+      parentSize.height &&
+      width &&
+      height
+    ) {
+      const newCell = doRound(cellsState.allCells, parentSize.width, parentSize.height, width, height)
+      isRounded.current = true
+      dispatchCellsState([{
+        type: 'update',
+        payload: { cells: newCell },
+      }])
+    }
+  }, [parentSize.width, parentSize.height, width, height, cellsState.allCells, noScroll])
 
   useLayoutEffect(() => {
     let purePageContainerDom = viewerRef.current.parentElement
+    let [pw, ph] = [0, 0]
     if (!purePageContainerDom) {
-      setParentSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
+      [pw, ph] = [window.innerWidth,  window.innerHeight]
     } else {
-      setParentSize({
-        width: purePageContainerDom.offsetWidth,
-        height: purePageContainerDom.offsetHeight,
-      })
+      [pw, ph] = [purePageContainerDom.offsetWidth,   purePageContainerDom.offsetHeight]
     }
+    setParentSize({
+      width: pw,
+      height: ph,
+    })
     purePageContainerDom = null
-  }, [viewerRef.current])
+  }, [viewerRef.current, cellsState])
 
   return (
     <div
@@ -62,16 +144,7 @@ export default function viewer({ cells, height, width, style, id }:ViewerPropsTy
       key={viewerId}
       ref={viewerRef}
       className="viewer"
-      style={{
-        ...style,
-        width,
-        height: isRounded ? (width / parentSize.width) * parentSize.height : height,
-        overflowX: 'hidden',
-        overflowY: isRounded ? 'hidden' : 'auto',
-        transform: `scale(${parentSize.width / (width || 1)})`,
-        position: 'relative',
-        transformOrigin: 'left top',
-      }}
+      style={viewerStyle}
     >
       { cellDoms }
     </div>

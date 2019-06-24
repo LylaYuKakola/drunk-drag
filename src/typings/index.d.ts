@@ -35,6 +35,7 @@ export interface ViewerPropsType {
   width: number,
   style: any,
   id: string,
+  noScroll: boolean,
 }
 
 export interface GuideLinePropsType {
