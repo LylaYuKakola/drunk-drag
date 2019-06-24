@@ -5,7 +5,7 @@
  *
  * 通过导出的connect方法和组件实例进行连接，开放给使用者一些操作组件内容的方法
  * 包括以下：
- * - 获取组件内的cell或者cells
+ * - 获取组件内的单个或多个cell的状态
  * - 修改对应cell的宽高
  * - 移动cell位置
  * - 增加/删除cell
@@ -47,7 +47,7 @@ export interface CommandsType {
   [key:string]: any,
 }
 
-const { useMemo, useCallback, useEffect } = React
+const { useMemo, useCallback, useEffect, useRef } = React
 
 export const commanders = new Map()
 
@@ -60,13 +60,16 @@ export const commanders = new Map()
  */
 export default function useCommander(componentId:string, cellsState:CellsStateType, dispatch:DispatchType, extra?:any) {
 
+  const cellsStateRef = useRef<CellsStateType>(cellsState)
+
   const getCells = useCallback<CellGetterType>((ids) => {
+    const cellsState = cellsStateRef.current
     if (!cellsState.allCells || !cellsState.allCells.length) return []
     if (!ids) return deepCopy(cellsState.allCells)
     return deepCopy(
       cellsState.allCells.filter((cell:CellType) => ids.includes(cell.id)),
     )
-  }, [cellsState.allCells])
+  }, [])
 
   const commander = useMemo<CommandsType>(() => {
     return Object.freeze({
@@ -190,7 +193,12 @@ export default function useCommander(componentId:string, cellsState:CellsStateTy
   }, [dispatch, getCells, extra])
 
   useEffect(() => {
+    cellsStateRef.current = cellsState
+  }, [cellsState])
+
+  useEffect(() => {
     commanders.set(componentId, commander)
+    console.log(commanders)
     return () => {
       commanders.delete(componentId)
     }
