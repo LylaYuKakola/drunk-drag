@@ -16,6 +16,10 @@ interface ShortcutKeyType {
   dispatch: (actions:ReducerActionType[]) => void
 }
 
+const onDocumentSelectStart = (event:Event) => {
+  event.returnValue = false
+}
+
 /**
  * @param isActive
  * @param dispatch
@@ -41,6 +45,8 @@ export default function useShortcutKey({
     ) return
 
     event.stopPropagation()
+    event.preventDefault()
+    document.addEventListener('selectstart', onDocumentSelectStart)
 
     if (isControlDown.current) {
       switch (keyStr) {
@@ -101,6 +107,7 @@ export default function useShortcutKey({
     const keyStr = event.key
     if (keyStr === 'Shift') isShiftDown.current = false
     if (keyStr === 'Control') isControlDown.current = false
+    document.removeEventListener('selectstart', onDocumentSelectStart)
 
   }, [isActive, dispatch])
 

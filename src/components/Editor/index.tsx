@@ -3,7 +3,7 @@
  */
 
 import * as React from 'react'
-import { CellType, EditorType } from '../../typings'
+import { EditorType } from '../../typings'
 import useCells from '../../uses/useCells'
 import useConstantState from '../../uses/useConstantState'
 import useGuider from '../../guider'
@@ -88,7 +88,7 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
 
     const [startX, startY] = startPosition.current
     const [moveX, moveY] = getTouchRelativePosition(event)
-    let [diffX, diffY] = [moveX - startX, moveY - startY]
+    const [diffX, diffY] = [moveX - startX, moveY - startY]
 
     if ((Math.abs(diffX) <= 2) && (Math.abs(diffY) <= 2)) return
 
