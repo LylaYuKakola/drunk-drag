@@ -3,22 +3,22 @@
     position: absolute;
     width: 100%;
     height: 0;
-    border-top: 1px dashed #00a7ff;
-    box-shadow: 0 0 1px rgba(0,0,0,0.1);
+    border-top: 1px dashed rgba(0, 176, 255, 0.8);
+    box-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
     z-index: 987654320;
   }
   &-y-c, &-y-a, &-y-e {
     position: absolute;
     width: 0;
     height: 100%;
-    border-left: 1px dashed #00a7ff;
-    box-shadow: 0 0 1px 1px rgba(0,0,0,0.1);
+    border-left: 1px dashed rgba(0, 176, 255, 0.8);
+    box-shadow: 0 0 1px 1px rgba(255, 255, 255, 0.1);
     z-index: 987654320;
   }
   &-x-a, &-y-a {
-    border-color: #fcff00;
+    border-color: rgba(255, 255, 0, 0.8);
   }
   &-x-e, &-y-e {
-    border-color: #00ff49;
+    border-color: rgba(0, 255, 73, 0.8);
   }
 }

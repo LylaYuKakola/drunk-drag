@@ -62,6 +62,7 @@ function doGuide(
   ]
 
   const getGetLine = getGetGetLine([aLeft, aTop, aRight, aBottom])
+  let distanceToCurrent = 99999999999
 
   allCells.forEach((cell:CellType) => {
     if (selectedCells.includes(cell)) return
@@ -71,30 +72,62 @@ function doGuide(
     if (directionX === 'L') {
       let lines:any[]
       lines = getLine([cLeft, cCenterX, cRight], aRight, directionX)
-      lines =  getLine([cRight, cCenterX, cLeft], aLeft, directionX) || lines
-      lines =  getLine([cRight, cLeft, cCenterX], aCenterX, directionX) || lines
-      if (lines) [result[0], result[1]] = lines
+      lines = getLine([cRight, cCenterX, cLeft], aLeft, directionX) || lines
+      lines = getLine([cRight, cLeft, cCenterX], aCenterX, directionX) || lines
+      if (lines) {
+        const [disL, disT] = [aLeft - cLeft, aTop - cTop]
+        const distance = Math.sqrt((disL * disL) + (disT * disT))
+        if (distance < distanceToCurrent) {
+          distanceToCurrent = distance
+          result[0] = lines[0]
+          result[1] = lines[1]
+        }
+      }
     }
     if (directionX === 'R') {
       let lines:any[]
       lines = getLine([cRight, cCenterX, cLeft], aLeft, directionX)
       lines = getLine([cLeft, cCenterX, cRight], aRight, directionX) || lines
       lines = getLine([cLeft, cRight, cCenterX], aCenterX, directionX) || lines
-      if (lines) [result[0], result[1]] = lines
+      if (lines) {
+        const [disL, disT] = [aLeft - cLeft, aTop - cTop]
+        const distance = Math.sqrt((disL * disL) + (disT * disT))
+        if (distance < distanceToCurrent) {
+          distanceToCurrent = distance
+          result[0] = lines[0]
+          result[1] = lines[1]
+        }
+      }
     }
     if (directionY === 'T') {
       let lines:any[]
       lines = getLine([cTop, cCenterY, cBottom], aBottom, directionY)
       lines = getLine([cBottom, cCenterY, cTop], aTop, directionY) || lines
       lines = getLine([cBottom, cTop, cCenterY], aCenterY, directionY) || lines
-      if (lines) [result[2], result[3]] = lines
+      if (lines) {
+        const [disL, disT] = [aLeft - cLeft, aTop - cTop]
+        const distance = Math.sqrt((disL * disL) + (disT * disT))
+        if (distance < distanceToCurrent) {
+          distanceToCurrent = distance
+          result[2] = lines[0]
+          result[3] = lines[1]
+        }
+      }
     }
     if (directionY === 'B') {
       let lines:any[]
       lines = getLine([cBottom, cCenterY, cTop], aTop, directionY)
       lines = getLine([cTop, cCenterY, cBottom], aBottom, directionY) || lines
       lines = getLine([cTop, cBottom, cCenterY], aCenterY, directionY) || lines
-      if (lines) [result[2], result[3]] = lines
+      if (lines) {
+        const [disL, disT] = [aLeft - cLeft, aTop - cTop]
+        const distance = Math.sqrt((disL * disL) + (disT * disT))
+        if (distance < distanceToCurrent) {
+          distanceToCurrent = distance
+          result[2] = lines[0]
+          result[3] = lines[1]
+        }
+      }
     }
   })
 
