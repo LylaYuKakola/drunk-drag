@@ -12,6 +12,7 @@ import { CellType, CellsStateType, ReducerActionType, ReducerPayloadType } from 
 import { getCellId } from '../util/guid'
 import * as tj from '../util/typeJudgement'
 import Timeout = NodeJS.Timeout
+import { MIN_HEIGHT_OF_CELL, MIN_WIDTH_OF_CELL } from '../util/constVariables'
 
 const { useReducer, useCallback, useRef, useEffect } = React
 
@@ -96,7 +97,7 @@ const doAppendSelection:HandlerType = (prevState, payload) => {
 const doResize:HandlerType = (prevState, payload) => {
   const { allCells } = prevState
   let { selectedCells } = prevState
-  const [resizeX, resizeY] = payload.data
+  let [resizeX, resizeY] = payload.data
   const direction = payload.direction || ''
 
   if (tj.cannotNumberUsed(resizeX) ||
@@ -107,6 +108,19 @@ const doResize:HandlerType = (prevState, payload) => {
   ) return prevState
 
   const currentCell = selectedCells[0]
+  const { w: cw, h: ch } = currentCell
+  if (direction.includes('l') && (cw - resizeX) < MIN_WIDTH_OF_CELL) {
+    resizeX = cw - MIN_WIDTH_OF_CELL
+  }
+  if (direction.includes('r') && (cw + resizeX) < MIN_WIDTH_OF_CELL) {
+    resizeX = MIN_WIDTH_OF_CELL - cw
+  }
+  if (direction.includes('t') && (ch - resizeY) < MIN_HEIGHT_OF_CELL) {
+    resizeY = ch - MIN_HEIGHT_OF_CELL
+  }
+  if (direction.includes('b') && (ch + resizeY) < MIN_HEIGHT_OF_CELL) {
+    resizeY = MIN_HEIGHT_OF_CELL - ch
+  }
 
   // left
   if (direction.includes('l')) {

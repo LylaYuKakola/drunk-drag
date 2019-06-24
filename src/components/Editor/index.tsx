@@ -3,7 +3,7 @@
  */
 
 import * as React from 'react'
-import { CellType, EditorType, MountedFunctionType } from '../../typings'
+import { CellType, EditorType } from '../../typings'
 import useCells from '../../uses/useCells'
 import useConstantState from '../../uses/useConstantState'
 import useGuider from '../../guider'
@@ -12,7 +12,6 @@ import { getEditorId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
 import useTouchedRelativePosition from '../../uses/useTouchedRelativePosition'
 import * as tj from '../../util/typeJudgement'
-import deepCopy from '../../util/deepCopy'
 import useCommander from '../../commander'
 import Timeout = NodeJS.Timeout
 
@@ -89,7 +88,7 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
 
     const [startX, startY] = startPosition.current
     const [moveX, moveY] = getTouchRelativePosition(event)
-    const [diffX, diffY] = [moveX - startX, moveY - startY]
+    let [diffX, diffY] = [moveX - startX, moveY - startY]
 
     if ((Math.abs(diffX) <= 2) && (Math.abs(diffY) <= 2)) return
 

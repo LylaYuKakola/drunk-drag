@@ -198,7 +198,6 @@ export default function useCommander(componentId:string, cellsState:CellsStateTy
 
   useEffect(() => {
     commanders.set(componentId, commander)
-    console.log(commanders)
     return () => {
       commanders.delete(componentId)
     }

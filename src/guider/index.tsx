@@ -7,7 +7,7 @@ import { GuideLinePropsType, CellType } from '../typings'
 import { MIN_DISTANCE } from '../util/constVariables'
 import './index.scss'
 
-const { useRef, useEffect } = React
+const { useRef, useEffect, useMemo } = React
 
 type ActiveCoordinateType = number[]
 
@@ -128,7 +128,34 @@ export default function ({
     }
   }, [...activeCoordinate])
 
-  const lines = doGuide(oldActiveCoordinate.current, activeCoordinate, allCells, selectedCells)
+  return useMemo(() => {
+    if (!visible) return []
 
-  return visible ? lines : []
+    // 获取对比标线
+    const lines = doGuide(
+      oldActiveCoordinate.current,
+      activeCoordinate,
+      allCells,
+      selectedCells,
+    )
+
+    // 获取中心标线
+    const [aLeft, aTop, aRight, aBottom] = activeCoordinate
+    const [aCenterX, aCenterY] = [(aLeft + aRight) / 2, (aTop + aBottom) / 2]
+    const [eCenterX, eCenterY] = [editorW / 2, editorH / 2]
+    if (Math.abs(aCenterX - eCenterX) < MIN_DISTANCE) {
+      [lines[0], lines[1]] = [
+        (<div style={{ height: editorH, top: 0, left: aCenterX }} className="guideline-y-a" />),
+        (<div style={{ height: editorH, top: 0, left: eCenterX }} className="guideline-y-e" />),
+      ]
+    }
+    if (Math.abs(aCenterY - eCenterY) < MIN_DISTANCE) {
+      [lines[2], lines[3]] = [
+        (<div style={{ width: editorW, left: 0, top: aCenterY }} className="guideline-x-a" />),
+        (<div style={{ width: editorW, left: 0, top: eCenterY }} className="guideline-x-e" />),
+      ]
+    }
+
+    return lines
+  }, [activeCoordinate, allCells, selectedCells, editorH, editorW, visible])
 }
