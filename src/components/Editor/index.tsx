@@ -90,7 +90,8 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
     const [moveX, moveY] = getTouchRelativePosition(event)
     const [diffX, diffY] = [moveX - startX, moveY - startY]
 
-    if ((Math.abs(diffX) <= 2) && (Math.abs(diffY) <= 2)) return
+    // if ((Math.abs(diffX) <= 2) && (Math.abs(diffY) <= 2)) return
+    // @TODO 此处的优化另算
 
     startPosition.current = [moveX, moveY]
     document.body.style.userSelect = 'none' // 禁止页面的选中

@@ -31,11 +31,11 @@ export interface EditorType {
 
 export interface ViewerPropsType {
   cells: CellType[]|Promise<CellType[]>,
-  height: number,
-  width: number,
+  height?: number,
+  width?: number,
   style: any,
   id: string,
-  noScroll: boolean,
+  noScroll?: boolean,
 }
 
 export interface GuideLinePropsType {
@@ -76,4 +76,10 @@ export interface DrunkDragType {
   getEditor: any,
   Editor: any,
   Viewer: any,
+}
+
+export interface ListType {
+  list: ViewerPropsType[]|Promise<ViewerPropsType[]>, // cells, id, style
+  height: number,
+  width: number,
 }
