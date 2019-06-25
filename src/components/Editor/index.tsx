@@ -84,7 +84,7 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
 
   // drag move
   const handleMove = useCallback((event:MouseEvent|TouchEvent) => {
-    // setGuideLinesVisible(true)
+    setGuideLinesVisible(true)
 
     const [startX, startY] = startPosition.current
     const [moveX, moveY] = getTouchRelativePosition(event)
@@ -165,13 +165,12 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
 
   useEffect(() => {
     if (onChange && tj.isFunction(onChange)) onChange(cellsState.allCells)
-    if (!guideLinesVisible) setGuideLinesVisible(true)
     if (timeoutToHideGuideLines.current) {
       clearTimeout(timeoutToHideGuideLines.current)
     }
     timeoutToHideGuideLines.current = setTimeout(() => {
       setGuideLinesVisible(false)
-    }, 400)
+    }, 200)
   }, [cellsState])
 
   useEffect(() => {

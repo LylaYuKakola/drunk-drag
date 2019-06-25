@@ -13,6 +13,7 @@ import { getCellId } from '../util/guid'
 import * as tj from '../util/typeJudgement'
 import Timeout = NodeJS.Timeout
 import { MIN_HEIGHT_OF_CELL, MIN_WIDTH_OF_CELL } from '../util/constVariables'
+import deepCopy from '../util/deepCopy'
 
 const { useReducer, useCallback, useRef, useEffect } = React
 
@@ -167,6 +168,19 @@ const doAdd:HandlerType = (prevState, payload) => {
   return { allCells, selectedCells }
 }
 
+const doPaste:HandlerType = (prevState) => {
+  const { allCells, selectedCells } = prevState
+  let newCells = deepCopy(selectedCells)
+  if (!newCells || !newCells.length) return prevState
+  newCells = newCells.map((cell:CellType) => {
+    cell.id += `_copied_${Math.floor(Math.random() * 100)}`
+    cell.x += (20 * Math.random())
+    cell.y += (20 * Math.random())
+    return cell
+  })
+  return { selectedCells, allCells: [...allCells, ...newCells] }
+}
+
 const doDelete:HandlerType = (prevState) => {
   let { allCells, selectedCells } = prevState
   allCells = allCells.filter((cell:CellType) => {
@@ -226,6 +240,7 @@ export default function useCellsReducer(
 ):[any, any] {
   const revertedStack = useRef<string[]>([JSON.stringify(cells)])
   const timeoutToPushStack = useRef<Timeout>()
+  const copied = useRef<boolean>(false)
 
   const reducer = useCallback((
     state:CellsStateType,
@@ -239,6 +254,14 @@ export default function useCellsReducer(
       switch (type) {
         case 'update':
           currentState = doUpdate(currentState, payload)
+          break
+        case 'copy':
+          copied.current = true
+          break
+        case 'paste':
+          if (copied.current) {
+            currentState = doPaste(currentState)
+          }
           break
         case 'click':
           currentState = doClick(currentState, payload)

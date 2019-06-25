@@ -215,17 +215,19 @@ export default function ({
       ]
       if (linesData[0]) {
         const moveX = linesData[0].data[1] - linesData[0].data[0]
-        if (directionX === 'L' && moveX < 2) moveData[0] = moveX
-        if (directionX === 'R' && moveX > -2) moveData[0] = moveX
+        if (directionX === 'L' && Math.abs(moveX) >= 1 && moveX < 2) moveData[0] = moveX
+        if (directionX === 'R' && Math.abs(moveX) >= 1 && moveX > -2) moveData[0] = moveX
       }
       if (linesData[1]) {
         const moveY = linesData[1].data[1] - linesData[1].data[0]
-        if (directionY === 'T' && moveY < 2) moveData[1] = moveY
-        if (directionY === 'B' && moveY > -2) moveData[1] = moveY
+        if (directionY === 'T' && Math.abs(moveY) >= 1 && moveY < 2) moveData[1] = moveY
+        if (directionY === 'B' && Math.abs(moveY) >= 1 && moveY > -2) moveData[1] = moveY
       }
     }
 
     if (!!moveData[0] || !!moveData[1]) {
+      const a = new Error()
+      console.log(a.stack)
       dispatcher([{
         type: 'move',
         payload: {
