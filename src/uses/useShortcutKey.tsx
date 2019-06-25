@@ -1,9 +1,7 @@
 /**
  * @desc 快捷键
  * control + delete
- * shift + 上下左右
  * control + c / v / z
- * shift + clickDown 多选
  */
 
 import * as React from 'react'
@@ -29,20 +27,15 @@ export default function useShortcutKey({
   dispatch,
 }: ShortcutKeyType) {
 
-  const isControlDown:{current:boolean} = useRef(false)
-  const isShiftDown:{current:boolean} = useRef(false)
+  const isControlDown = useRef<boolean>(false)
 
   const keyDown = useCallback((event: KeyboardEvent) => {
     if (!isActive) return
 
     const keyStr = event.key
-    if (keyStr === 'Shift') isShiftDown.current = true
     if (keyStr === 'Control')  isControlDown.current = true
 
-    if (
-      (isShiftDown.current && isControlDown.current) ||
-      (!isShiftDown.current && !isControlDown.current)
-    ) return
+    if (!isControlDown.current) return
 
     event.stopPropagation()
     event.preventDefault()
@@ -51,8 +44,14 @@ export default function useShortcutKey({
     if (isControlDown.current) {
       switch (keyStr) {
         case 'c':
+          dispatch([{
+            type: 'copy',
+          }])
           break
         case 'v':
+          dispatch([{
+            type: 'paste',
+          }])
           break
         case 'z':
           dispatch([{
@@ -69,43 +68,12 @@ export default function useShortcutKey({
       }
     }
 
-    if (isShiftDown.current) {
-      switch (keyStr) {
-        case 'ArrowUp':
-          dispatch([{
-            type: 'move',
-            payload : { data: [0 , -1] },
-          }])
-          break
-        case 'ArrowDown':
-          dispatch([{
-            type: 'move',
-            payload : { data: [0, 1] },
-          }])
-          break
-        case 'ArrowLeft':
-          dispatch([{
-            type: 'move',
-            payload : { data: [-1 , 0] },
-          }])
-          break
-        case 'ArrowRight':
-          dispatch([{
-            type: 'move',
-            payload : { data: [1, 0] },
-          }])
-          break
-        default:
-          return
-      }
-    }
   }, [isActive, dispatch])
 
   const keyUp = useCallback((event: KeyboardEvent) => {
     if (!isActive) return
 
     const keyStr = event.key
-    if (keyStr === 'Shift') isShiftDown.current = false
     if (keyStr === 'Control') isControlDown.current = false
     document.removeEventListener('selectstart', onDocumentSelectStart)
 
