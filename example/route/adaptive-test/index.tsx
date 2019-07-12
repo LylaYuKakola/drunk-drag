@@ -8,8 +8,8 @@ const { Viewer } = $D
 
 export default function () {
 
-  const [pageWidth, setPageWidth] = useState(800)
-  const [pageHeight, setPageHeight] = useState(600)
+  const [pageWidth, setPageWidth] = useState(500)
+  const [pageHeight, setPageHeight] = useState(1900)
   const viewer = useRef(null)
   const arrow = useRef({
     left: false,
@@ -54,13 +54,24 @@ export default function () {
 
   return (
     <div className="test">
-      <div className="test-viewer">
-        <Viewer
+      <div className="test-adaptive">
+        <Viewer.Adaptive
           id="001"
           cells={asyncCells()}
           width={pageWidth}
           height={pageHeight}
           style={{ backgroundColor: '#ff8080' }}
+          noScroll={false}
+        />
+      </div>
+      <div className="test-adaptive">
+        <Viewer.Adaptive
+          id="002"
+          cells={asyncCells()}
+          width={pageWidth}
+          height={pageHeight}
+          style={{ backgroundColor: '#ff8080' }}
+          noScroll
         />
       </div>
     </div>

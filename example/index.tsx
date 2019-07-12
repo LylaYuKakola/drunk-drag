@@ -10,7 +10,7 @@ import Core from '../src/index'
 import Text from './component/Text'
 import Image from './component/Image'
 
-DD.registerElement({
+DD.register({
   Text, Image,
 })
 

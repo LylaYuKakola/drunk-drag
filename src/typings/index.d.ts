@@ -1,3 +1,6 @@
+import Editor from "../components/Editor";
+import Viewer from "../components/Viewer";
+
 /**
  * @desc 公用类型集合
  */
@@ -29,13 +32,23 @@ export interface EditorType {
   id?: string, // 不指定则从内部获取
 }
 
-export interface ViewerPropsType {
+export interface BasicViewerPropsType {
   cells: CellType[]|Promise<CellType[]>,
   height?: number,
   width?: number,
   style: any,
   id: string,
+}
+
+export interface AdaptiveViewerPropsType extends BasicViewerPropsType{
   noScroll?: boolean,
+}
+
+export interface ViewportViewerPropsType extends BasicViewerPropsType{
+  viewportHeight?: number,
+  viewportWidth?: number,
+  panelTop: number,
+  panelLeft: number,
 }
 
 export interface GuideLinePropsType {
@@ -68,18 +81,9 @@ export interface ReducerActionType {
 export type MountedFunctionType = (id:string) => void
 
 export interface DrunkDragType {
-  registerElement: any,
-  unregisterElement: any,
-  hasElement: any,
-  getAllElementKeys: any,
-  getViewer: any,
-  getEditor: any,
+  register: any,
+  unregister: any,
+  getAllTypes: any,
   Editor: any,
   Viewer: any,
-}
-
-export interface ListType {
-  list: ViewerPropsType[]|Promise<ViewerPropsType[]>, // cells, id, style
-  height: number,
-  width: number,
 }

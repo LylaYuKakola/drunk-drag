@@ -10,6 +10,8 @@ export default function () {
 
   const [pageWidth, setPageWidth] = useState(800)
   const [pageHeight, setPageHeight] = useState(600)
+  const [top, setTop] = useState(0)
+  const [left, setLeft] = useState(0)
   const viewer = useRef(null)
   const arrow = useRef({
     left: false,
@@ -25,6 +27,10 @@ export default function () {
     if (event.key === 'ArrowDown') arrow.current.down = true
     if (event.key === 'ArrowLeft') arrow.current.left = true
     if (event.key === 'ArrowRight') arrow.current.right = true
+    if (event.key === 'w') setTop(state => state - 1)
+    if (event.key === 's') setTop(state => state + 1)
+    if (event.key === 'a') setLeft(state => state - 1)
+    if (event.key === 'd') setLeft(state => state + 1)
     if (arrow.current.left) x = -1
     if (arrow.current.right) x = 1
     if (arrow.current.up) y = -1
@@ -55,12 +61,16 @@ export default function () {
   return (
     <div className="test">
       <div className="test-viewer">
-        <Viewer
+        <Viewer.Viewport
           id="001"
           cells={asyncCells()}
           width={pageWidth}
           height={pageHeight}
           style={{ backgroundColor: '#ff8080' }}
+          viewportHeight={100}
+          viewportWidth={100}
+          panelTop={top}
+          panelLeft={left}
         />
       </div>
     </div>

@@ -51,7 +51,7 @@ const doClick:HandlerType = (prevState, payload) => {
   const { allCells } = prevState
   let { selectedCells } = prevState
   const [positionX, positionY] = payload.data
-  if (tj.cannotNumberUsed(positionX) || tj.cannotNumberUsed(positionY)) return prevState
+  if (!tj.isUsableNumber(positionX) || !tj.isUsableNumber(positionY)) return prevState
   const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
   if (currentCell) {
     selectedCells = [currentCell]
@@ -65,7 +65,7 @@ const doMultiClick:HandlerType = (prevState, payload) => {
   const { allCells } = prevState
   let { selectedCells } = prevState
   const [positionX, positionY] = payload.data
-  if (tj.cannotNumberUsed(positionX) || tj.cannotNumberUsed(positionY)) return prevState
+  if (!tj.isUsableNumber(positionX) || !tj.isUsableNumber(positionY)) return prevState
   const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
   if (currentCell) {
     selectedCells = [...selectedCells, currentCell]
@@ -101,8 +101,8 @@ const doResize:HandlerType = (prevState, payload) => {
   let [resizeX, resizeY] = payload.data
   const direction = payload.direction || ''
 
-  if (tj.cannotNumberUsed(resizeX) ||
-    tj.cannotNumberUsed(resizeY) ||
+  if (!tj.isUsableNumber(resizeX) ||
+    !tj.isUsableNumber(resizeY) ||
     (!resizeX && !resizeY) ||
     !direction ||
     !selectedCells.length
@@ -148,7 +148,7 @@ const doResize:HandlerType = (prevState, payload) => {
 const doMove:HandlerType = (prevState, payload) => {
   const { allCells, selectedCells } = prevState
   const [moveX, moveY] = payload.data
-  if (tj.cannotNumberUsed(moveX) || tj.cannotNumberUsed(moveY)) return prevState
+  if (!tj.isUsableNumber(moveX) || !tj.isUsableNumber(moveY)) return prevState
   if (moveX || moveY) {
     selectedCells.forEach((cell:CellType) => {
       cell.x += moveX
