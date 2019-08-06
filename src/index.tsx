@@ -42,6 +42,6 @@ Reflect.setPrototypeOf($D, Object.freeze({
   Viewer,
 }))
 
-// @ts-ignore
+// @ts-ignore @TODO 方便测试
 if (window)  window['$D'] = $D
 export default $D as any

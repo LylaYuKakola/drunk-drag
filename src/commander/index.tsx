@@ -19,8 +19,9 @@
 
 import * as React from 'react'
 
-import { ReducerActionType, CellsStateType, CellType } from '../typings'
+import { ReducerActionType, CellsStateType, CellType, PlainObjectType } from '../typings'
 import deepCopy from '../util/deepCopy'
+import * as tj from '../util/typeJudgement'
 
 type DispatchType = (actions: ReducerActionType[]) => void
 type CellGetterType = (ids: string[]) => any
@@ -49,6 +50,17 @@ export interface CommandsType {
 
 const { useMemo, useCallback, useEffect, useRef } = React
 
+// extra过滤掉不是不是函数的属性
+const extraCommanderFilter = (extra:PlainObjectType = {}) => {
+  const result:PlainObjectType = {}
+  const keys = Object.keys(extra)
+  if (!keys.length) return result
+  keys.forEach((key:string) => {
+    if (!tj.isFunction(extra[key])) result[key] = extra[key]
+  })
+  return result
+}
+
 export const commanders = new Map()
 
 /**
@@ -73,7 +85,7 @@ export default function useCommander(componentId:string, cellsState:CellsStateTy
 
   const commander = useMemo<CommandsType>(() => {
     return Object.freeze({
-      ...(extra || {}),
+      ...extraCommanderFilter(extra),
       cell(id:string) {
         return getCells([id])[0] || null
       },

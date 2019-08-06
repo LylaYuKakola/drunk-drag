@@ -21,6 +21,8 @@ type PositionType = [number, number]
 type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T
 type HandlerType = (prevState?:CellsStateType, payload?:ReducerPayloadType) => CellsStateType
 
+const REVET_STACK_TIMEOUT_NUM = 400
+
 /**
  * 获取点击到的cell
  * @param allCells
@@ -43,8 +45,14 @@ const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPositi
   }
 }
 
-const doUpdate:HandlerType = (prevState, payload) => {
-  return { allCells: payload.cells || [], selectedCells: [] }
+const doInitialize:HandlerType = (prevState, payload) => {
+  return {
+    ...prevState,
+    allCells: payload.cells || [],
+    selectedCells: [],
+    initializing: true,
+    wrongInitialized: payload.wrong || false,
+  }
 }
 
 const doClick:HandlerType = (prevState, payload) => {
@@ -58,7 +66,10 @@ const doClick:HandlerType = (prevState, payload) => {
   } else {
     selectedCells = []
   }
-  return { allCells, selectedCells }
+  return {
+    ...prevState,
+    selectedCells,
+  }
 }
 
 const doMultiClick:HandlerType = (prevState, payload) => {
@@ -70,7 +81,7 @@ const doMultiClick:HandlerType = (prevState, payload) => {
   if (currentCell) {
     selectedCells = [...selectedCells, currentCell]
   }
-  return { allCells, selectedCells }
+  return { ...prevState, selectedCells }
 }
 
 const doSelect:HandlerType = (prevState, payload) => {
@@ -81,7 +92,7 @@ const doSelect:HandlerType = (prevState, payload) => {
   selectedCells = allCells.filter((cell:CellType) => {
     return keys.includes(cell.id)
   })
-  return { selectedCells, allCells: prevState.allCells }
+  return { ...prevState, selectedCells }
 }
 
 const doAppendSelection:HandlerType = (prevState, payload) => {
@@ -92,7 +103,7 @@ const doAppendSelection:HandlerType = (prevState, payload) => {
   selectedCells = [...selectedCells, ...(allCells.filter((cell:CellType) => {
     return keys.includes(cell.id)
   }))]
-  return { allCells, selectedCells }
+  return { ...prevState, selectedCells }
 }
 
 const doResize:HandlerType = (prevState, payload) => {
@@ -142,7 +153,7 @@ const doResize:HandlerType = (prevState, payload) => {
     currentCell.h += resizeY
   }
   selectedCells = [currentCell]
-  return { allCells, selectedCells }
+  return { ...prevState, allCells, selectedCells }
 }
 
 const doMove:HandlerType = (prevState, payload) => {
@@ -155,7 +166,7 @@ const doMove:HandlerType = (prevState, payload) => {
       cell.y += moveY
     })
   }
-  return { allCells, selectedCells }
+  return { ...prevState, allCells, selectedCells }
 }
 
 const doAdd:HandlerType = (prevState, payload) => {
@@ -165,7 +176,7 @@ const doAdd:HandlerType = (prevState, payload) => {
   newCell.id = getCellId(newCell.id) // id允许重复
   allCells = [...allCells, newCell]
   selectedCells = [...selectedCells, newCell]
-  return { allCells, selectedCells }
+  return { ...prevState, allCells, selectedCells }
 }
 
 const doPaste:HandlerType = (prevState) => {
@@ -178,7 +189,7 @@ const doPaste:HandlerType = (prevState) => {
     cell.y += (20 * Math.random())
     return cell
   })
-  return { selectedCells, allCells: [...allCells, ...newCells] }
+  return { ...prevState, selectedCells, allCells: [...allCells, ...newCells] }
 }
 
 const doDelete:HandlerType = (prevState) => {
@@ -187,11 +198,11 @@ const doDelete:HandlerType = (prevState) => {
     return !selectedCells.includes(cell)
   })
   selectedCells = []
-  return { allCells, selectedCells }
+  return { ...prevState, allCells, selectedCells }
 }
 
-const doClean:HandlerType = () => {
-  return { allCells: [], selectedCells: [] }
+const doClean:HandlerType = (prevState) => {
+  return { ...prevState, allCells: [], selectedCells: [] }
 }
 
 const doHighest:HandlerType = (prevState, payload) => {
@@ -208,8 +219,8 @@ const doHighest:HandlerType = (prevState, payload) => {
     }
   })
   return {
+    ...prevState,
     allCells: [...lowerCells, ...higherCells],
-    selectedCells: prevState.selectedCells,
   }
 }
 
@@ -227,8 +238,8 @@ const doLowest:HandlerType = (prevState, payload) => {
     }
   })
   return {
+    ...prevState,
     allCells: [...lowerCells, ...higherCells],
-    selectedCells: prevState.selectedCells,
   }
 }
 
@@ -252,8 +263,11 @@ export default function useCellsReducer(
     actions.forEach((action: any) => {
       const { type, payload } = action
       switch (type) {
-        case 'update':
-          currentState = doUpdate(currentState, payload)
+        case 'initialize':
+          currentState = doInitialize(currentState, payload)
+          break
+        case 'reload':
+          doReload(currentState, payload)
           break
         case 'copy':
           copied.current = true
@@ -304,7 +318,7 @@ export default function useCellsReducer(
           isAllCellsChanged = true
           break
         case 'revert':
-          currentState = doRevert()
+          currentState = doRevert(currentState)
           break
         default:
           console.warn('cell没有这个操作')
@@ -315,12 +329,12 @@ export default function useCellsReducer(
       timeoutToPushStack.current = setTimeout(() => {
         revertedStack.current.push(JSON.stringify(currentState.allCells))
         if (revertedStack.current.length > 10) revertedStack.current.shift()
-      }, 400)
+      }, REVET_STACK_TIMEOUT_NUM)
     }
     return currentState
   }, [])
 
-  const doRevert = useCallback<HandlerType>(() => {
+  const doRevert = useCallback((pervState) => {
     if (revertedStack.current.length < 2) {
       return {
         allCells: JSON.parse(revertedStack.current[0]),
@@ -329,21 +343,53 @@ export default function useCellsReducer(
     }
     revertedStack.current.pop()
     return {
+      ...pervState,
       allCells: JSON.parse(revertedStack.current[revertedStack.current.length - 1]),
       selectedCells:[],
     }
   }, [])
 
+  const doReload = useCallback((pervState, payload:{cells: CellType[]|Promise<CellType[]>}) => {
+    const { cells: newCells } = payload
+    Promise.resolve(newCells).then((c: CellType[]) => {
+      dispatch([{
+        type: 'initialize',
+        payload: {
+          cells: c.map(cell => ({ id: getCellId(cell.id), ...cell })),
+          wrong: false,
+        },
+      }])
+    }, (error) => {
+      // @TODO 吞了一个错
+      dispatch([{
+        type: 'initialize',
+        payload: { cells: [], wrong: true },
+      }])
+    })
+    return pervState
+  }, [])
+
   const [state, dispatch] = useReducer(reducer, {
     allCells: [],
     selectedCells: [],
+    initializing: false,
+    wrongInitialized: false,
   })
 
   useEffect(() => {
     Promise.resolve(cells).then((c: CellType[]) => {
       dispatch([{
-        type: 'update',
-        payload: { cells: c.map(cell => ({ id: getCellId(cell.id), ...cell })) },
+        type: 'initialize',
+        payload: {
+          cells: c.map(cell => ({ id: getCellId(cell.id), ...cell })),
+          wrong: false,
+        },
+      }])
+    }, (error) => {
+      // @TODO 吞了一个错
+      dispatch([{
+        type: 'initialize',
+        payload: { cells: [], wrong: true },
       }])
     })
   }, [])

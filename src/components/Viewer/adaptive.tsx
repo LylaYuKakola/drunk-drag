@@ -15,6 +15,7 @@ const { useState, useLayoutEffect, useRef, useEffect, useMemo } = React
 const MIN_FLEX_HEIGHT = 2
 
 // round方法为viewer提供了高度上的自动适配功能
+// 核心思想是伸缩页面中存在的横向空白
 const doRound:(
   cells: CellType[],
   parentWidth:number,
@@ -24,7 +25,9 @@ const doRound:(
 ) => CellType[] = (cells, parentWidth, parentHeight, width, height) => {
   if (!cells.length) return []
   const roundHeight = height - (width / parentWidth) * parentHeight
-  const flexBlocks:[number, number][] = [[0, height]]
+  const flexBlocks:[number, number][] = [[0, height]] // 横向空白条
+
+  // 获取页面中存在的横向空白条
   cells
     .sort((curr:CellType, next:CellType) => curr.y < next.y ? -1 : 1)
     .forEach((cell: CellType) => {
@@ -52,6 +55,7 @@ const doRound:(
       }
     })
 
+  // 伸缩计算，并重新计算cell的位置
   const allFlexBlocksHeight:number = flexBlocks.reduce((prev, curr) => [0, prev[1] + curr[1]])[1]
   flexBlocks.forEach(([fy, fh]) => {
     let flexHeight = Math.round((fh / allFlexBlocksHeight) * roundHeight)
@@ -94,6 +98,9 @@ export default function adaptiveViewer({ cells, height, width, style, id, noScro
     noScroll,
   ])
 
+  // 面板样式
+  // 主要计算transform-scale的值，进行宽度的伸缩适配
+  // overflow设置为横向不能滚动，如果设置 props.noScroll 则纵向也不能滚动
   const panelStyle = useMemo(() => {
     const h = !noScroll ? height :
       parentSize.width ? (width / parentSize.width) * parentSize.height :
@@ -114,8 +121,13 @@ export default function adaptiveViewer({ cells, height, width, style, id, noScro
     noScroll,
   ])
 
+  // 将当前组件实例的操作注册到Commander上
   useCommander(`viewer-${viewerId}`, cellsState, dispatchCellsState)
 
+  // Round操作，设置了noScroll之后，纵向进行伸缩适配
+  // 此处需要对 parentSize.width 和 parentSize.height进行判断
+  // 在页面加载完成，parentSize相关布局数据拿到后，才能进行round操作
+  // @TODO 这样有时候会导致页面渲染完才执行Round，页面会蹦一下
   useEffect(() => {
     if (!noScroll || isRounded.current) return
     if (
@@ -134,6 +146,7 @@ export default function adaptiveViewer({ cells, height, width, style, id, noScro
     }
   }, [parentSize.width, parentSize.height, width, height, cellsState.allCells, noScroll])
 
+  // 获取parentSize相关布局数据
   useLayoutEffect(() => {
     let purePageContainerDom = viewerRef.current.parentElement
     let [pw, ph] = [0, 0]

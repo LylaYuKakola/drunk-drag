@@ -1,9 +1,11 @@
-import Editor from "../components/Editor";
-import Viewer from "../components/Viewer";
-
+// @ts-ignore
 /**
  * @desc 公用类型集合
  */
+
+export interface PlainObjectType {
+  [key:string]: any,
+}
 
 export interface CommonElementPropsType {
   isViewer?: boolean,
@@ -63,6 +65,8 @@ export interface GuideLinePropsType {
 export interface CellsStateType {
   allCells: CellType[],
   selectedCells: CellType[],
+  initializing: boolean,
+  wrongInitialized: boolean,
 }
 
 export interface ReducerPayloadType {
@@ -71,6 +75,7 @@ export interface ReducerPayloadType {
   cell?: CellType,
   direction?: string,
   cells?: CellType[],
+  wrong?: boolean,
 }
 
 export interface ReducerActionType {
