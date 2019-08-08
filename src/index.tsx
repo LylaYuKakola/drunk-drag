@@ -3,7 +3,6 @@ import contents from './contents'
 import { commanders } from './commander'
 import Editor from './components/Editor'
 import Viewer from './components/Viewer'
-import { DrunkDragType } from './typings'
 import '../font/iconfont.css'
 import { warn } from './logger'
 

@@ -4,7 +4,7 @@
 
 import * as React from 'react'
 import { CellType, AdaptiveViewerPropsType } from '../../typings'
-import useCells from '../../uses/useCells'
+import useCells from '../../_commonParts/Cells'
 import useConstantState from '../../uses/useConstantState'
 import { getViewerId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'

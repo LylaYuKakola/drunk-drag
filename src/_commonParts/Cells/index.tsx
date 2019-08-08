@@ -1,10 +1,10 @@
 /**
- * @desc cell构建DOM
+ * @desc cell构建DOM，loading 和 wrongLoaded 在此处实现
  */
 
 import * as React from 'react'
-import Cell from '../components/Cell'
-import { CellsStateType } from '../typings'
+import Cell from './Cell'
+import { CellsStateType } from '../../typings'
 
 const { useMemo } = React
 

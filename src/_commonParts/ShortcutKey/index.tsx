@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react'
-import { ReducerActionType } from '../typings'
+import { ReducerActionType } from '../../typings'
 
 const { useRef, useEffect, useCallback } = React
 

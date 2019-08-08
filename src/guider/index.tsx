@@ -226,8 +226,6 @@ export default function ({
     }
 
     if (!!moveData[0] || !!moveData[1]) {
-      const a = new Error()
-      console.log(a.stack)
       dispatcher([{
         type: 'move',
         payload: {

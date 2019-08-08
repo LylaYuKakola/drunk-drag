@@ -65,8 +65,8 @@ export interface GuideLinePropsType {
 export interface CellsStateType {
   allCells: CellType[],
   selectedCells: CellType[],
-  initializing: boolean,
-  wrongInitialized: boolean,
+  loading: boolean,
+  wrongLoaded: boolean,
 }
 
 export interface ReducerPayloadType {
@@ -75,7 +75,9 @@ export interface ReducerPayloadType {
   cell?: CellType,
   direction?: string,
   cells?: CellType[],
-  wrong?: boolean,
+  cellsAsync?: CellType[]|Promise<CellType[]>,
+  loading?: boolean,
+  wrongLoaded?: boolean,
 }
 
 export interface ReducerActionType {

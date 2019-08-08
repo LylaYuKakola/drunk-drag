@@ -4,20 +4,19 @@
 
 import * as React from 'react'
 import { EditorType } from '../../typings'
-import useCells from '../../uses/useCells'
+import useCells from '../../_commonParts/Cells'
 import useConstantState from '../../uses/useConstantState'
 import useGuider from '../../guider'
-import useShortcutKey from '../../uses/useShortcutKey'
+import useShortcutKey from '../../_commonParts/ShortcutKey'
 import { getEditorId } from '../../util/guid'
 import useCellsReducer from '../../dispatcher'
-import useTouchedRelativePosition from '../../uses/useTouchedRelativePosition'
 import * as tj from '../../util/typeJudgement'
 import useCommander from '../../commander'
 import Timeout = NodeJS.Timeout
 
-const { useState, useRef, useEffect, useCallback, useLayoutEffect } = React
+const { useState, useRef, useEffect, useCallback } = React
 
-type PositionType = [number, number]
+type PositionType = number[]
 
 /**
  * 拖拽编辑面板组件
@@ -39,11 +38,24 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
 
   const [guideLinesVisible, setGuideLinesVisible] = useState<boolean>(false)
   const [isActiveEditor, setIsActiveEditor] = useState<boolean>(false)
-  const [editorPanel, setEditorPanel] = useState<HTMLDivElement|null>(null)
 
   const [cellsState, dispatchCellsState] = useCellsReducer(cells)
 
-  const getTouchRelativePosition = useTouchedRelativePosition(editorPanel)
+  const getTouchRelativePosition = useCallback((event) => {
+    if (
+      !panelRef.current ||
+      !panelRef.current.getBoundingClientRect ||
+      !event
+    ) return [-1000, -1000]
+    const { left, top } = panelRef.current.getBoundingClientRect()
+    if (event.type.startsWith('mouse') || (event.type === 'contextmenu')) {
+      return [event.clientX - left, event.clientY - top]
+    }
+    return [
+      event.touches[0].clientX - left,
+      event.touches[0].clientY - top,
+    ]
+  }, [panelRef])
 
   useCommander(`editor-${editorId}`, cellsState, dispatchCellsState)
 
@@ -156,12 +168,6 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
     isActive: isActiveEditor,
     dispatch: dispatchCellsState,
   })
-
-  useLayoutEffect(() => {
-    if (panelRef.current) {
-      setEditorPanel(panelRef.current)
-    }
-  }, [panelRef.current])
 
   useEffect(() => {
     if (onChange && tj.isFunction(onChange)) onChange(cellsState.allCells)

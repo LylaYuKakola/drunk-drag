@@ -4,8 +4,8 @@
 
 import * as React from 'react'
 import './index.scss'
-import contents from '../../contents'
-import { CellType } from '../../typings'
+import contents from '../../../contents'
+import { CellType } from '../../../typings'
 
 const { useMemo } = React
 
@@ -56,50 +56,50 @@ export default function (cell:CellType) {
             <div
               data-tag={`l*${id}`}
               className="cell-left-line"
-              style={{ height: (h + 4), top: -2, left: -4 }}
+              style={{ height: (h + 2), top: -1, left: -2 }}
             />
           ), (
             <div
               data-tag={`r*${id}`}
               className="cell-right-line"
-              style={{ height: (h + 4), top: -2, left: (w + 4) }}
+              style={{ height: (h + 2), top: -1, left: (w + 1) }}
             />
           ), (
             <div
               data-tag={`t*${id}`}
               className="cell-top-line"
-              style={{ width: (w + 4), top: -4, left: -2 }}
+              style={{ width: (w + 2), top: -2, left: -1 }}
             />
           ), (
             <div
               data-tag={`b*${id}`}
               className="cell-bottom-line"
-              style={{ width: (w + 4), top: (h + 4), left: -2 }}
+              style={{ width: (w + 2), top: (h + 1), left: -1 }}
             />
           ), (
             <div
               data-tag={`tl*${id}`}
               className="cell-top-left-btn"
-              style={{ top: -4, left: -4 }}
+              style={{ top: -2, left: -2 }}
             />
           ),
           (
             <div
               data-tag={`tr*${id}`}
               className="cell-top-right-btn"
-              style={{ top: -4, left: (w + 2) }}
+              style={{ top: -2, left: (w - 1) }}
             />
           ), (
             <div
               data-tag={`bl*${id}`}
               className="cell-bottom-left-btn"
-              style={{ top: (h + 3), left: -4 }}
+              style={{ top: (h - 1), left: -2 }}
             />
           ), (
             <div
               data-tag={`br*${id}`}
               className="cell-bottom-right-btn"
-              style={{ top: (h + 2), left: (w + 2) }}
+              style={{ top: (h - 1), left: (w - 1) }}
             />
           ),
         ])

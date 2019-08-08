@@ -8,245 +8,34 @@
  */
 
 import * as React from 'react'
-import { CellType, CellsStateType, ReducerActionType, ReducerPayloadType } from '../typings'
+import { CellType, CellsStateType, ReducerActionType } from '../typings'
 import { getCellId } from '../util/guid'
-import * as tj from '../util/typeJudgement'
 import Timeout = NodeJS.Timeout
-import { MIN_HEIGHT_OF_CELL, MIN_WIDTH_OF_CELL } from '../util/constVariables'
-import deepCopy from '../util/deepCopy'
+import {
+  doUpdate,
+  doPaste,
+  doClick,
+  doMultiClick,
+  doSelect,
+  doAppendSelection,
+  doResize,
+  doMove,
+  doAdd,
+  doDelete,
+  doClean,
+  doHighest,
+  doLowest,
+  doChangeLoading,
+  doShowWrongLoaded,
+} from './handlers'
 
 const { useReducer, useCallback, useRef, useEffect } = React
-
-type PositionType = [number, number]
-type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T
-type HandlerType = (prevState?:CellsStateType, payload?:ReducerPayloadType) => CellsStateType
-
-const REVET_STACK_TIMEOUT_NUM = 400
-
-/**
- * 获取点击到的cell
- * @param allCells
- * @param touchedPosition
- */
-const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPosition) => {
-  const [startX, startY] = touchedPosition
-  let index = allCells.length - 1
-  while (index >= 0) {
-    const cell = allCells[index]
-    const { x, y, h, w } = cell
-    if ((startX >= x) &&
-      (startX <= (x + w)) &&
-      (startY >= y) &&
-      (startY <= (y + h))
-    ) {
-      return cell
-    }
-    index -= 1
-  }
-}
-
-const doInitialize:HandlerType = (prevState, payload) => {
-  return {
-    ...prevState,
-    allCells: payload.cells || [],
-    selectedCells: [],
-    initializing: true,
-    wrongInitialized: payload.wrong || false,
-  }
-}
-
-const doClick:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  const [positionX, positionY] = payload.data
-  if (!tj.isUsableNumber(positionX) || !tj.isUsableNumber(positionY)) return prevState
-  const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
-  if (currentCell) {
-    selectedCells = [currentCell]
-  } else {
-    selectedCells = []
-  }
-  return {
-    ...prevState,
-    selectedCells,
-  }
-}
-
-const doMultiClick:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  const [positionX, positionY] = payload.data
-  if (!tj.isUsableNumber(positionX) || !tj.isUsableNumber(positionY)) return prevState
-  const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
-  if (currentCell) {
-    selectedCells = [...selectedCells, currentCell]
-  }
-  return { ...prevState, selectedCells }
-}
-
-const doSelect:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let selectedCells
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  selectedCells = allCells.filter((cell:CellType) => {
-    return keys.includes(cell.id)
-  })
-  return { ...prevState, selectedCells }
-}
-
-const doAppendSelection:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  selectedCells = [...selectedCells, ...(allCells.filter((cell:CellType) => {
-    return keys.includes(cell.id)
-  }))]
-  return { ...prevState, selectedCells }
-}
-
-const doResize:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  let [resizeX, resizeY] = payload.data
-  const direction = payload.direction || ''
-
-  if (!tj.isUsableNumber(resizeX) ||
-    !tj.isUsableNumber(resizeY) ||
-    (!resizeX && !resizeY) ||
-    !direction ||
-    !selectedCells.length
-  ) return prevState
-
-  const currentCell = selectedCells[0]
-  const { w: cw, h: ch } = currentCell
-  if (direction.includes('l') && (cw - resizeX) < MIN_WIDTH_OF_CELL) {
-    resizeX = cw - MIN_WIDTH_OF_CELL
-  }
-  if (direction.includes('r') && (cw + resizeX) < MIN_WIDTH_OF_CELL) {
-    resizeX = MIN_WIDTH_OF_CELL - cw
-  }
-  if (direction.includes('t') && (ch - resizeY) < MIN_HEIGHT_OF_CELL) {
-    resizeY = ch - MIN_HEIGHT_OF_CELL
-  }
-  if (direction.includes('b') && (ch + resizeY) < MIN_HEIGHT_OF_CELL) {
-    resizeY = MIN_HEIGHT_OF_CELL - ch
-  }
-
-  // left
-  if (direction.includes('l')) {
-    currentCell.x += resizeX
-    currentCell.w -= resizeX
-  }
-  // right
-  if (direction.includes('r')) {
-    currentCell.w += resizeX
-  }
-  // top
-  if (direction.includes('t')) {
-    currentCell.y += resizeY
-    currentCell.h -= resizeY
-  }
-  // bottom
-  if (direction.includes('b')) {
-    currentCell.h += resizeY
-  }
-  selectedCells = [currentCell]
-  return { ...prevState, allCells, selectedCells }
-}
-
-const doMove:HandlerType = (prevState, payload) => {
-  const { allCells, selectedCells } = prevState
-  const [moveX, moveY] = payload.data
-  if (!tj.isUsableNumber(moveX) || !tj.isUsableNumber(moveY)) return prevState
-  if (moveX || moveY) {
-    selectedCells.forEach((cell:CellType) => {
-      cell.x += moveX
-      cell.y += moveY
-    })
-  }
-  return { ...prevState, allCells, selectedCells }
-}
-
-const doAdd:HandlerType = (prevState, payload) => {
-  let { allCells, selectedCells } = prevState
-  const newCell = payload.cell
-  if (newCell) return prevState
-  newCell.id = getCellId(newCell.id) // id允许重复
-  allCells = [...allCells, newCell]
-  selectedCells = [...selectedCells, newCell]
-  return { ...prevState, allCells, selectedCells }
-}
-
-const doPaste:HandlerType = (prevState) => {
-  const { allCells, selectedCells } = prevState
-  let newCells = deepCopy(selectedCells)
-  if (!newCells || !newCells.length) return prevState
-  newCells = newCells.map((cell:CellType) => {
-    cell.id += `_copied_${Math.floor(Math.random() * 100)}`
-    cell.x += (20 * Math.random())
-    cell.y += (20 * Math.random())
-    return cell
-  })
-  return { ...prevState, selectedCells, allCells: [...allCells, ...newCells] }
-}
-
-const doDelete:HandlerType = (prevState) => {
-  let { allCells, selectedCells } = prevState
-  allCells = allCells.filter((cell:CellType) => {
-    return !selectedCells.includes(cell)
-  })
-  selectedCells = []
-  return { ...prevState, allCells, selectedCells }
-}
-
-const doClean:HandlerType = (prevState) => {
-  return { ...prevState, allCells: [], selectedCells: [] }
-}
-
-const doHighest:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  const lowerCells:CellType[] = []
-  const higherCells:CellType[] = []
-  allCells.forEach((cell:CellType) => {
-    if (keys.includes(cell.id)) {
-      higherCells.push(cell)
-    } else {
-      lowerCells.push(cell)
-    }
-  })
-  return {
-    ...prevState,
-    allCells: [...lowerCells, ...higherCells],
-  }
-}
-
-const doLowest:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  const lowerCells:CellType[] = []
-  const higherCells:CellType[] = []
-  allCells.forEach((cell:CellType) => {
-    if (keys.includes(cell.id)) {
-      lowerCells.push(cell)
-    } else {
-      higherCells.push(cell)
-    }
-  })
-  return {
-    ...prevState,
-    allCells: [...lowerCells, ...higherCells],
-  }
-}
+const REVERT_STACK_TIMEOUT_NUM = 400
 
 /**
  * @param cells
  */
-export default function useCellsReducer(
+export default function dispatcher(
   cells: CellType[]|Promise<CellType[]>,
 ):[any, any] {
   const revertedStack = useRef<string[]>([JSON.stringify(cells)])
@@ -263,11 +52,9 @@ export default function useCellsReducer(
     actions.forEach((action: any) => {
       const { type, payload } = action
       switch (type) {
-        case 'initialize':
-          currentState = doInitialize(currentState, payload)
-          break
-        case 'reload':
-          doReload(currentState, payload)
+        case 'update':
+          currentState = doUpdate(currentState, payload)
+          isAllCellsChanged = true
           break
         case 'copy':
           copied.current = true
@@ -276,6 +63,7 @@ export default function useCellsReducer(
           if (copied.current) {
             currentState = doPaste(currentState)
           }
+          isAllCellsChanged = true
           break
         case 'click':
           currentState = doClick(currentState, payload)
@@ -320,6 +108,21 @@ export default function useCellsReducer(
         case 'revert':
           currentState = doRevert(currentState)
           break
+        case 'showLoading':
+          currentState = doChangeLoading(currentState, { loading: true })
+          currentState = doShowWrongLoaded(currentState, { wrongLoaded: false })
+          break
+        case 'failLoaded':
+          currentState = doChangeLoading(currentState, { loading: false })
+          currentState = doShowWrongLoaded(currentState, { wrongLoaded: true })
+          break
+        case 'succeedLoaded':
+          currentState = doChangeLoading(currentState, { loading: false })
+          currentState = doShowWrongLoaded(currentState, { wrongLoaded: false })
+          break
+        case 'loadAsync':
+          doLoadAsync(currentState, payload) // 异步处理，对当前的state不做修改
+          break
         default:
           console.warn('cell没有这个操作')
           break
@@ -329,7 +132,7 @@ export default function useCellsReducer(
       timeoutToPushStack.current = setTimeout(() => {
         revertedStack.current.push(JSON.stringify(currentState.allCells))
         if (revertedStack.current.length > 10) revertedStack.current.shift()
-      }, REVET_STACK_TIMEOUT_NUM)
+      }, REVERT_STACK_TIMEOUT_NUM)
     }
     return currentState
   }, [])
@@ -349,49 +152,40 @@ export default function useCellsReducer(
     }
   }, [])
 
-  const doReload = useCallback((pervState, payload:{cells: CellType[]|Promise<CellType[]>}) => {
-    const { cells: newCells } = payload
-    Promise.resolve(newCells).then((c: CellType[]) => {
+  const doLoadAsync = useCallback((pervState, { cellsAsync }) => {
+    Promise.resolve(cellsAsync).then((c: CellType[]) => {
       dispatch([{
-        type: 'initialize',
+        type: 'update',
         payload: {
           cells: c.map(cell => ({ id: getCellId(cell.id), ...cell })),
-          wrong: false,
         },
-      }])
+      }, { type: 'succeedLoaded' }])
     }, (error) => {
       // @TODO 吞了一个错
+      console.error(error)
       dispatch([{
-        type: 'initialize',
-        payload: { cells: [], wrong: true },
-      }])
+        type: 'update',
+        payload: {
+          cells: [],
+        },
+      }, { type: 'failLoaded' }])
     })
-    return pervState
   }, [])
 
   const [state, dispatch] = useReducer(reducer, {
     allCells: [],
     selectedCells: [],
-    initializing: false,
-    wrongInitialized: false,
+    loading: false,
+    wrongLoaded: false,
   })
 
   useEffect(() => {
-    Promise.resolve(cells).then((c: CellType[]) => {
-      dispatch([{
-        type: 'initialize',
-        payload: {
-          cells: c.map(cell => ({ id: getCellId(cell.id), ...cell })),
-          wrong: false,
-        },
-      }])
-    }, (error) => {
-      // @TODO 吞了一个错
-      dispatch([{
-        type: 'initialize',
-        payload: { cells: [], wrong: true },
-      }])
-    })
+    dispatch([{
+      type: 'loadAsync',
+      payload: {
+        cellsAsync: cells,
+      },
+    }])
   }, [])
 
   return [state, dispatch]
