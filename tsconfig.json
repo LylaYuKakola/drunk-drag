@@ -41,6 +41,7 @@
     ],
     "align": false,
     "max-line-length": false,
-    "import-name": false
+    "import-name": false,
+    "function-name": false
   }
 }
