@@ -1,8 +1,8 @@
 import * as React from 'react'
 import contents from './contents'
 import { commanders } from './commander'
-import Editor from './components/Editor'
-import Viewer from './components/Viewer'
+import Editor from './Editor'
+import Viewer from './Viewer'
 import '../font/iconfont.css'
 import { warn } from './logger'
 

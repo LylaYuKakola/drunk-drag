@@ -5,13 +5,13 @@
  */
 
 import * as React from 'react'
-import { ReducerActionType } from '../../typings'
+import { ReducerAction } from '../typings'
 
 const { useRef, useEffect, useCallback } = React
 
 interface ShortcutKeyType {
   isActive: boolean,
-  dispatch: (actions:ReducerActionType[]) => void
+  dispatch: (actions:ReducerAction[]) => void
 }
 
 const onDocumentSelectStart = (event:Event) => {

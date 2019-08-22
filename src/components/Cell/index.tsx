@@ -4,12 +4,11 @@
 
 import * as React from 'react'
 import './index.scss'
-import contents from '../../../contents'
-import { CellType } from '../../../typings'
+import { CellProps } from '../../typings'
 
 const { useMemo } = React
 
-interface CellStyleType {
+interface CellRectStyle {
   top: number,
   left: number,
   width: number,
@@ -20,38 +19,41 @@ interface CellStyleType {
  * 根据cell渲染内容
  * @param cell 元素配置
  */
-export default function (cell:CellType) {
-  const {
-    w, h, x, y, type, style, isSelected, isViewer, id,
-  } = cell
+export default ({
+  w,
+  h,
+  x,
+  y,
+  id,
+  content,
+  borderVisible,
+  zIndex,
+  style,
+  containerExtraStyle,
+}: CellProps) => {
 
-  const content = useMemo<any|null>(() => {
-    const component = contents[type]
-    return component({
-      isViewer,
-      ...cell,
-    })
-  }, [cell])
-
-  const cellStyle = useMemo<CellStyleType>(() => ({
+  // cell的矩形布局样式
+  const cellRectStyle = useMemo<CellRectStyle>(() => ({
+    ...(containerExtraStyle || {}),
+    zIndex,
     top: y || 0,
     left: x || 0,
     width: w || 0,
     height: h || 0,
-  }), [w, h, x, y])
+  }), [w, h, x, y, containerExtraStyle, zIndex])
 
   return useMemo(() => (
     <div
-      style={cellStyle}
+      style={cellRectStyle}
       className="cell"
-      id={id}
-      key={id}
+      key={`cell-${id}`}
+      id={`cell-${id}`}
     >
       {/* *********************************  content  ******************************* */}
       <div className="cell-content" style={...style}>{ content }</div>
       {/* *********************************  拖拽边框  ******************************* */}
       {
-        (isSelected && !isViewer) && ([
+        borderVisible && ([
           (
             <div
               data-tag={`l*${id}`}
@@ -105,5 +107,5 @@ export default function (cell:CellType) {
         ])
       }
     </div>
-  ), [w, h, cellStyle, id, style, isSelected, isViewer, content])
+  ), [w, h, cellRectStyle, id, style, content, borderVisible])
 }

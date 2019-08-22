@@ -8,12 +8,12 @@
  */
 
 import * as React from 'react'
-import { CellType } from '../typings'
-import { MIN_WIDTH_OF_CELL, MIN_HEIGHT_OF_CELL } from '../util/constVariables'
+import { ElementAndViewportProps } from '../typings'
+import { MIN_WIDTH_OF_CELL, MIN_HEIGHT_OF_CELL } from '../util/constants'
 
 const { useCallback } = React
 
-export type LimitCellSizeType = (cell:CellType, data:number[], direction:string) => number[]
+export type LimitCellSizeType = (cell:ElementAndViewportProps, data:number[], direction:string) => number[]
 export type LimitCellPositionType = (active:number[], data:number[]) => number[]
 /**
  * @param width 编辑面板宽度

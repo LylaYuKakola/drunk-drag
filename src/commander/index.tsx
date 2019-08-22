@@ -19,29 +19,27 @@
 
 import * as React from 'react'
 
-import { ReducerActionType, CellsStateType, CellType, PlainObjectType } from '../typings'
+import { ReducerAction, CellsState, ElementAndViewportProps, PlainObject } from '../typings'
 import deepCopy from '../util/deepCopy'
 import * as tj from '../util/typeJudgement'
+import getKeysInStateByTagName from '../util/getKeysInStateByTagName'
+import { ELEMENT, VIEWPORT } from '../util/constants'
 
-type DispatchType = (actions: ReducerActionType[]) => void
-type CellGetterType = (ids: string[]) => any
-type CellFnType = (id:string) => CellType
-type CellsFnType = (ids?:string[]) => CellType[]
-type ResizeType = (id:string, data:[number, number, number, number]) => void
-type ResizeToType = (id:string, data:[number, number, number, number]) => void
-type MoveType = (id:string, data:[number, number]) => void
-type MoveToType = (id:string, data:[number, number]) => void
-type AddType = (cell:CellType) => void
-type DeleteType = (ids?:string[]) => void
+type DispatchType = (actions: ReducerAction[]) => void
+type CellGetterType = (tag:string, ids: string[]) => any
+type CellFnType = (tag:string, id:string) => ElementAndViewportProps
+type CellsFnType = (tag:string, ids?:string[]) => ElementAndViewportProps[]
+type ResizeType = (tag:string, id:string, data:[number, number, number, number]) => void
+type MoveType = (tag:string, id:string, data:[number, number]) => void
+type AddType = (tag:string, cell:ElementAndViewportProps) => void
+type DeleteType = (tag:string, ids?:string[]) => void
 type CleanType = () => void
 
 export interface CommandsType {
   cell: CellFnType,
   cells: CellsFnType,
   resize: ResizeType,
-  resizeTo: ResizeToType,
   move: MoveType,
-  moveTo: MoveToType,
   add: AddType,
   delete: DeleteType,
   clean: CleanType,
@@ -51,8 +49,8 @@ export interface CommandsType {
 const { useMemo, useCallback, useEffect, useRef } = React
 
 // extra过滤掉不是不是函数的属性
-const extraCommanderFilter = (extra:PlainObjectType = {}) => {
-  const result:PlainObjectType = {}
+const extraCommanderFilter = (extra:PlainObject = {}) => {
+  const result:PlainObject = {}
   const keys = Object.keys(extra)
   if (!keys.length) return result
   keys.forEach((key:string) => {
@@ -70,122 +68,98 @@ export const commanders = new Map()
  * @param dispatch
  * @param extra
  */
-export default function useCommander(componentId:string, cellsState:CellsStateType, dispatch:DispatchType, extra?:any) {
+export default function useCommander(componentId:string, cellsState:CellsState, dispatch:DispatchType, extra?:any) {
 
-  const cellsStateRef = useRef<CellsStateType>(cellsState)
+  const cellsStateRef = useRef<CellsState>(cellsState)
 
-  const getCells = useCallback<CellGetterType>((ids) => {
+  const getCells = useCallback<CellGetterType>((tag, ids) => {
     const cellsState = cellsStateRef.current
-    if (!cellsState.allCells || !cellsState.allCells.length) return []
-    if (!ids) return deepCopy(cellsState.allCells)
+    const { key } = getKeysInStateByTagName(tag)
+    const cells = Reflect.get(cellsState, key)
+    if (!cells || !cells.length) return []
+    if (!ids) return deepCopy(cells)
     return deepCopy(
-      cellsState.allCells.filter((cell:CellType) => ids.includes(cell.id)),
+      cells.filter((cell:ElementAndViewportProps) => ids.includes(cell.id)),
     )
   }, [])
 
-  const commander = useMemo<CommandsType>(() => {
+  const commander = useMemo(() => {
     return Object.freeze({
       ...extraCommanderFilter(extra),
-      cell(id:string) {
-        return getCells([id])[0] || null
+      element(id:string) {
+        return getCells(ELEMENT, [id])[0] || null
       },
-      cells(ids:string[]) {
-        return getCells(ids)
+      elements(tag:string, ids:string[]) {
+        return getCells(ELEMENT, ids)
       },
-      resize(id:string, data:number[]) {
+      viewport(id:string) {
+        return getCells(VIEWPORT, [id])[0] || null
+      },
+      viewports(tag:string, ids:string[]) {
+        return getCells(VIEWPORT, ids)
+      },
+      resize(tag:string, id:string, data:number[]) {
         const [top, right, bottom, left] = data
         dispatch([{
           type: 'select',
           payload: {
-            keys: [id],
+            tag,
+            ids: [id],
           },
         }, {
           type: 'resize',
           payload: {
-            keys: [id],
-            data: [-top, -left],
-            direction: 'lt',
+            tag,
+            data: {
+              direction: 'lt',
+              resize: [-top, -left],
+            },
           },
         }, {
           type: 'resize',
           payload: {
-            keys: [id],
-            data: [right, bottom],
-            direction: 'rb',
+            tag,
+            data: {
+              direction: 'rb',
+              resize: [right, bottom],
+            },
           },
         }])
       },
-      resizeTo(id:string, data:number[]) {
-        const [top, right, bottom, left] = data
-        const cell = getCells([id])[0] || null
-        if (!cell) return
-        const { x, y, w, h } = cell
-        dispatch([{
-          type: 'select',
-          payload: {
-            keys: [id],
-          },
-        }, {
-          type: 'resize',
-          payload: {
-            keys: [id],
-            data: [top - x, left - y],
-            direction: 'lt',
-          },
-        }, {
-          type: 'resize',
-          payload: {
-            keys: [id],
-            data: [right - (x + w), bottom - (y + h)],
-            direction: 'rb',
-          },
-        }])
-      },
-      move(id:string, data:number[]) {
+      move(tag:string, id:string, data:number[]) {
         const [moveX, moveY] = data
         dispatch([{
           type: 'select',
           payload: {
-            keys: [id],
+            tag,
+            ids: [id],
           },
         }, {
           type: 'move',
           payload: {
-            keys: [id],
-            data: [moveX, moveY],
-            direction: 'lt',
+            tag,
+            data: {
+              move: [moveX, moveY],
+              direction: 'lt',
+            },
           },
         }])
       },
-      moveTo(id:string, data:number[]) {
-        const [moveToX, moveToY] = data
-        const cell = getCells([id])[0] || null
-        if (!cell) return
-        const { x, y } = cell
-        dispatch([{
-          type: 'select',
-          payload: {
-            keys: [id],
-          },
-        }, {
-          type: 'move',
-          payload: {
-            keys: [id],
-            data: [moveToX - x, moveToY - y],
-          },
-        }])
-      },
-      add(cell:CellType) {
+      add(tag:string, cells:ElementAndViewportProps[]) {
         dispatch([{
           type: 'add',
-          payload: { cell },
+          payload: {
+            tag,
+            data: { cells },
+          },
         }])
       },
-      delete(ids:string[]) {
+      delete(tag:string, ids:string[]) {
         dispatch([{
           type: 'select',
           payload: {
-            keys: ids ? ids : [],
+            tag,
+            ids: ids ? ids : [],
           },
         }, {
           type: 'delete',
@@ -194,11 +168,6 @@ export default function useCommander(componentId:string, cellsState:CellsStateTy
       clean() {
         dispatch([{
           type: 'clean',
-        }])
-      },
-      revert() {
-        dispatch([{
-          type: 'revert',
         }])
       },
     })

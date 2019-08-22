@@ -3,21 +3,32 @@
  */
 
 import * as tj from '../util/typeJudgement'
-import { CellsStateType, CellType, ReducerPayloadType } from '../typings'
-import { MIN_HEIGHT_OF_CELL, MIN_WIDTH_OF_CELL } from '../util/constVariables'
+import { CellsState, ElementAndViewportProps, ReducerPayload } from '../typings'
+import { MIN_HEIGHT_OF_CELL, MIN_WIDTH_OF_CELL } from '../util/constants'
+import getKeysInStateByTagName from '../util/getKeysInStateByTagName'
 import { getCellId } from '../util/guid'
-import deepCopy from '../util/deepCopy'
 
 type PositionType = [number, number]
-type GetCurrentTouchedCellType = <T extends CellType>(allCells: T[], touchedPosition:PositionType) => T
-type HandlerType = (prevState?:CellsStateType, payload?:ReducerPayloadType) => CellsStateType
+type GetCurrentTouchedCell = <T extends ElementAndViewportProps>(allCells: T[], touchedPosition:PositionType) => T
+type HandlerType = (prevState?:CellsState, payload?:ReducerPayload) => CellsState
+
+interface ResizePayloadData {
+  direction: string,
+  resize: [number, number],
+}
+interface MovePayloadData {
+  move: [number, number],
+}
+interface AddPayloadData {
+  cells: ElementAndViewportProps[],
+}
 
 /**
  * 获取点击到的cell
- * @param allCells
+ * @param allCells (在传参数之前区分 viewports 和 elements)
  * @param touchedPosition
  */
-const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPosition) => {
+const getCurrentTouchedCell:GetCurrentTouchedCell = (allCells, touchedPosition) => {
   const [startX, startY] = touchedPosition
   let index = allCells.length - 1
   while (index >= 0) {
@@ -34,79 +45,90 @@ const getCurrentTouchedCell:GetCurrentTouchedCellType = (allCells, touchedPositi
   }
 }
 
-export const doUpdate:HandlerType = (prevState, payload) => {
+export const doUpdate:HandlerType = (
+  prevState,
+  payload,
+) => {
+  const { tag, data } = payload
+  const { key, selectedKey } = getKeysInStateByTagName(tag)
   return {
     ...prevState,
-    allCells: payload.cells || [],
-    selectedCells: [],
+    [key]: data || [],
+    [selectedKey]: [],
   }
 }
 
 export const doClick:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  const [positionX, positionY] = payload.data
-  if (!tj.isUsableNumber(positionX) || !tj.isUsableNumber(positionY)) return prevState
-  const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
-  if (currentCell) {
-    selectedCells = [currentCell]
-  } else {
-    selectedCells = []
-  }
-  return {
-    ...prevState,
-    selectedCells,
-  }
+  const { tag, data } = payload
+  const { click: [positionX, positionY] } = data
+  const { key, selectedKey, otherSelectedKey } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+  const currentCell = getCurrentTouchedCell(
+    allCellsWithTagName,
+    [positionX, positionY],
+  )
+  if (!currentCell) return { ...prevState, [selectedKey]: [], [otherSelectedKey]: [] }
+  return { ...prevState, [selectedKey]: [currentCell], [otherSelectedKey]: [] }
 }
 
 export const doMultiClick:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  const [positionX, positionY] = payload.data
-  if (!tj.isUsableNumber(positionX) || !tj.isUsableNumber(positionY)) return prevState
-  const currentCell = getCurrentTouchedCell(allCells, [positionX, positionY])
-  if (currentCell) {
-    selectedCells = [...selectedCells, currentCell]
+  const { tag, data: [positionX, positionY] } = payload
+  const { key, selectedKey, otherSelectedKey } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+  const selectedCellsWithTagName = Reflect.get(prevState, selectedKey)
+
+  const currentCell = getCurrentTouchedCell(allCellsWithTagName, [positionX, positionY])
+  if (!currentCell) return { ...prevState, [selectedKey]: [], [otherSelectedKey]: [] }
+  return {
+    ...prevState,
+    [selectedKey]: [...new Set([...selectedCellsWithTagName, currentCell])],
+    [otherSelectedKey]: [],
   }
-  return { ...prevState, selectedCells }
 }
 
 export const doSelect:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let selectedCells
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  selectedCells = allCells.filter((cell:CellType) => {
-    return keys.includes(cell.id)
+  const { tag, ids } = payload
+  if (!ids || !(tj.isArray(ids)) || !ids.length) return prevState
+  const { key, selectedKey } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+
+  const selected = allCellsWithTagName.filter((cell:ElementAndViewportProps) => {
+    return ids.includes(cell.id)
   })
-  return { ...prevState, selectedCells }
+  return { ...prevState, [selectedKey]: selected }
 }
 
 export const doAppendSelection:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  selectedCells = [...selectedCells, ...(allCells.filter((cell:CellType) => {
-    return keys.includes(cell.id)
-  }))]
-  return { ...prevState, selectedCells }
+  const { tag, ids } = payload
+  if (!ids || !(tj.isArray(ids)) || !ids.length) return prevState
+
+  const { key, selectedKey } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+  const selectedCellsWithTagName = Reflect.get(prevState, selectedKey)
+
+  const newSelected = allCellsWithTagName.filter((cell:ElementAndViewportProps) => {
+    return ids.includes(cell.id)
+  })
+  return {
+    ...prevState,
+    [selectedKey]: [...new Set([...selectedCellsWithTagName, ...newSelected])],
+  }
 }
 
 export const doResize:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  let { selectedCells } = prevState
-  let [resizeX, resizeY] = payload.data
-  const direction = payload.direction || ''
+  const tag = payload.tag
+  const data:ResizePayloadData = payload.data || {}
+  const direction = data.direction
+  let [resizeX, resizeY] = data.resize
 
-  if (!tj.isUsableNumber(resizeX) ||
-    !tj.isUsableNumber(resizeY) ||
-    (!resizeX && !resizeY) ||
-    !direction ||
-    !selectedCells.length
-  ) return prevState
+  const { key, selectedKey } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+  const selectedCellsWithTagName = Reflect.get(prevState, selectedKey)
 
-  const currentCell = selectedCells[0]
+  if (!selectedCellsWithTagName.length) return prevState
+
+  // 只针对第一个选中的进行resize
+  const currentCell = selectedCellsWithTagName[0]
   const { w: cw, h: ch } = currentCell
   if (direction.includes('l') && (cw - resizeX) < MIN_WIDTH_OF_CELL) {
     resizeX = cw - MIN_WIDTH_OF_CELL
@@ -139,107 +161,113 @@ export const doResize:HandlerType = (prevState, payload) => {
   if (direction.includes('b')) {
     currentCell.h += resizeY
   }
-  selectedCells = [currentCell]
-  return { ...prevState, allCells, selectedCells }
+  return {
+    ...prevState,
+    [key]: allCellsWithTagName,
+    [selectedKey]: [currentCell],
+  }
 }
 
 export const doMove:HandlerType = (prevState, payload) => {
-  const { allCells, selectedCells } = prevState
-  const [moveX, moveY] = payload.data
-  if (!tj.isUsableNumber(moveX) || !tj.isUsableNumber(moveY)) return prevState
+  const tag = payload.tag
+  const { move: [moveX, moveY] }:MovePayloadData = payload.data
+  const { selectedKey } = getKeysInStateByTagName(tag)
+  const selectedCellsWithTagName = Reflect.get(prevState, selectedKey)
+
   if (moveX || moveY) {
-    selectedCells.forEach((cell:CellType) => {
+    selectedCellsWithTagName.forEach((cell:ElementAndViewportProps) => {
       cell.x += moveX
       cell.y += moveY
     })
   }
-  return { ...prevState, allCells, selectedCells }
+  return {
+    ...prevState,
+    [selectedKey]: [...selectedCellsWithTagName],
+  }
 }
 
 export const doAdd:HandlerType = (prevState, payload) => {
-  let { allCells, selectedCells } = prevState
-  const newCell = payload.cell
-  if (newCell) return prevState
-  newCell.id = getCellId(newCell.id) // id允许重复
-  allCells = [...allCells, newCell]
-  selectedCells = [...selectedCells, newCell]
-  return { ...prevState, allCells, selectedCells }
+  const tag = payload.tag
+  const { cells }:AddPayloadData = payload.data
+  if (!cells || !cells.length) return prevState
+  const { key } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+  cells.forEach((newCell:ElementAndViewportProps) => {
+    newCell.id = getCellId(newCell.id)
+  })
+  return {
+    ...prevState,
+    [key]: [...new Set([...allCellsWithTagName, ...cells])],
+  }
 }
 
-export const doPaste:HandlerType = (prevState) => {
-  const { allCells, selectedCells } = prevState
-  let newCells = deepCopy(selectedCells)
-  if (!newCells || !newCells.length) return prevState
-  newCells = newCells.map((cell:CellType) => {
-    cell.id += `_copied_${Math.floor(Math.random() * 100)}`
-    cell.x += (20 * Math.random())
-    cell.y += (20 * Math.random())
-    return cell
-  })
-  return { ...prevState, selectedCells, allCells: [...allCells, ...newCells] }
-}
+export const doDelete:HandlerType = (prevState, payload) => {
+  const tag = payload.tag
+  const { key, selectedKey } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+  const selectedCellsWithTagName = Reflect.get(prevState, selectedKey)
 
-export const doDelete:HandlerType = (prevState) => {
-  let { allCells, selectedCells } = prevState
-  allCells = allCells.filter((cell:CellType) => {
-    return !selectedCells.includes(cell)
-  })
-  selectedCells = []
-  return { ...prevState, allCells, selectedCells }
+  return {
+    ...prevState,
+    [key]: allCellsWithTagName.filter((cell:ElementAndViewportProps) => {
+      return !selectedCellsWithTagName.includes(cell)
+    }),
+    [selectedKey]: [],
+  }
 }
 
 export const doClean:HandlerType = (prevState) => {
-  return { ...prevState, allCells: [], selectedCells: [] }
+  return {
+    ...prevState,
+    allElements: [],
+    allViewports: [],
+    selectedElements: [],
+    selectedViewports: [],
+  }
 }
 
 export const doHighest:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  const lowerCells:CellType[] = []
-  const higherCells:CellType[] = []
-  allCells.forEach((cell:CellType) => {
-    if (keys.includes(cell.id)) {
+  const { tag, ids } = payload
+  if (!ids || !ids.length) return prevState
+
+  const { key } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+
+  const lowerCells:ElementAndViewportProps[] = []
+  const higherCells:ElementAndViewportProps[] = []
+  allCellsWithTagName.forEach((cell:ElementAndViewportProps) => {
+    if (ids.includes(cell.id)) {
       higherCells.push(cell)
     } else {
       lowerCells.push(cell)
     }
   })
+
   return {
     ...prevState,
-    allCells: [...lowerCells, ...higherCells],
+    [key]: [...lowerCells, ...higherCells],
   }
 }
 
 export const doLowest:HandlerType = (prevState, payload) => {
-  const { allCells } = prevState
-  const { keys } = payload
-  if (!keys || !(tj.isArray(keys)) || !keys.length) return prevState
-  const lowerCells:CellType[] = []
-  const higherCells:CellType[] = []
-  allCells.forEach((cell:CellType) => {
-    if (keys.includes(cell.id)) {
+  const { tag, ids } = payload
+  if (!ids || !ids.length) return prevState
+
+  const { key } = getKeysInStateByTagName(tag)
+  const allCellsWithTagName = Reflect.get(prevState, key)
+
+  const lowerCells:ElementAndViewportProps[] = []
+  const higherCells:ElementAndViewportProps[] = []
+  allCellsWithTagName.forEach((cell:ElementAndViewportProps) => {
+    if (ids.includes(cell.id)) {
       lowerCells.push(cell)
     } else {
       higherCells.push(cell)
     }
   })
-  return {
-    ...prevState,
-    allCells: [...lowerCells, ...higherCells],
-  }
-}
 
-export const doChangeLoading:HandlerType = (prevState, payload) => {
   return {
     ...prevState,
-    loading: payload.loading,
-  }
-}
-
-export const doShowWrongLoaded:HandlerType = (prevState, payload) => {
-  return {
-    ...prevState,
-    wrongLoaded: payload.wrongLoaded,
+    [key]: [...lowerCells, ...higherCells],
   }
 }

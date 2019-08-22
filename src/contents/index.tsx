@@ -8,8 +8,6 @@ import * as React from 'react'
 import { warn, error } from '../logger'
 import * as tj from '../util/typeJudgement'
 
-const returnNull = ():null => null
-
 export default new Proxy(Object.create(null), {
   get(target, property:string):any {
     if (!property || property === 'undefined' || !Reflect.has(target, property)) {

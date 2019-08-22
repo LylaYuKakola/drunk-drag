@@ -3,8 +3,8 @@
  */
 
 import * as React from 'react'
-import { GuideLinePropsType, CellType } from '../typings'
-import { MIN_DISTANCE, MAX_NUMBER } from '../util/constVariables'
+import { GuideLineProps, ElementProps, ViewportProps } from '../typings'
+import { MIN_DISTANCE, MAX_DISTANCE, MAX_NUMBER, ELEMENT, VIEWPORT } from '../util/constants'
 import './index.scss'
 
 const { useRef, useEffect, useMemo } = React
@@ -15,63 +15,65 @@ interface LineDataType {
   data: number[],
   size: number,
   position: number,
+  tag: string,
 }
 
 // @TODO 这个函数不考虑入参设计，别乱用
-const getGetGetLine = (activeData:number[]) => (currentData:number[]) => (c:number, a:number, isX:boolean) => {
-  const [aLeft, aTop, aRight, aBottom] = activeData
-  const [cLeft, cTop, cRight, cBottom] = currentData
-  if (isX) {
-    const top = Math.min(cTop, aTop)
-    const height = cTop < aTop ? aBottom - cTop : cBottom - aTop
-    return {
-      type: 'y',
-      data: [a, c],
-      size: height,
-      position: top,
-    }
-    // return [
-    //   (<div style={{ height, top, left: a }} className="guideline-y-a" />),
-    //   (<div style={{ height, top, left: c }} className="guideline-y-c" />),
-    // ]
-  }
+const getGetGetLine =
+  (activeData:number[]) =>
+    (currentData:number[]) =>
+      (c:number, a:number, isX:boolean, isViewport:boolean) => {
+        const [aLeft, aTop, aRight, aBottom] = activeData
+        const [cLeft, cTop, cRight, cBottom] = currentData
+        if (isX) {
+          const top = Math.min(cTop, aTop)
+          const height = isViewport ? cBottom - cTop : cTop < aTop ? aBottom - cTop : cBottom - aTop
+          return {
+            type: 'y',
+            data: [a, c],
+            size: height,
+            position: isViewport ? cTop : top,
+            tag: isViewport ? VIEWPORT : ELEMENT,
+          }
+        }
 
-  const left = Math.min(cLeft, aLeft)
-  const width = cLeft < aLeft ? aRight - cLeft : cRight - aLeft
-  return {
-    type: 'x',
-    data: [a, c],
-    size: width,
-    position: left,
-  }
-  // return [
-  //   (<div style={{ width, left, top: a }} className="guideline-x-a" />),
-  //   (<div style={{ width, left, top: c }} className="guideline-x-c" />),
-  // ]
-}
-const judgementGetter = (lineGetter:any) => (cData:number[], a:number, direction:string) => {
-  let result:any[] = null
-  const isX = ['L', 'R'].includes(direction)
-  cData.forEach((c:number) => {
-    if (Math.abs(c - a) < MIN_DISTANCE) {
-      result = lineGetter(c, a, isX)
+        const left = Math.min(cLeft, aLeft)
+        const width = isViewport ? cRight - cLeft : cLeft < aLeft ? aRight - cLeft : cRight - aLeft
+        return {
+          type: 'x',
+          data: [a, c],
+          size: width,
+          position: isViewport ? cLeft : left,
+          tag: isViewport ? VIEWPORT : ELEMENT,
+        }
+      }
+
+const judgementGetter =
+  (lineGetter:any) =>
+    (cData:number[], a:number, direction:string, isViewport:boolean) => {
+      let result:any[] = null
+      const isX = ['L', 'R'].includes(direction)
+      cData.forEach((c:number) => {
+        if (Math.abs(c - a) < MIN_DISTANCE) {
+          result = lineGetter(c, a, isX, isViewport)
+        }
+      })
+      return result
     }
-  })
-  return result
-}
 
 function doGuide(
   oldCoordinate: ActiveCoordinateType,
   coordinate: ActiveCoordinateType,
-  allCells: CellType[],
-  selectedCells: CellType[],
+  allElements: ElementProps[],
+  allViewports: ViewportProps[],
+  selectedCells: ElementProps[],
 ):any[] {
 
-  if (!coordinate || !oldCoordinate || !allCells) return []
+  if (!coordinate || !oldCoordinate || !allViewports || !selectedCells) return []
   if (coordinate[2] < coordinate[0] || coordinate[3] < coordinate[1]) return []
   if (oldCoordinate[2] < oldCoordinate[0] || oldCoordinate[3] < oldCoordinate[1]) return []
 
-  const result = Array(4) // ax, cx, ay, cy
+  const result = Array(2) // ax, cx, ay, cy
   const [aLeft, aTop, aRight, aBottom] = coordinate
   const [aCenterX, aCenterY] = [(aLeft + aRight) / 2, (aTop + aBottom) / 2]
   const [directionX, directionY] = [
@@ -80,87 +82,90 @@ function doGuide(
   ]
 
   const getGetLine = getGetGetLine([aLeft, aTop, aRight, aBottom])
-  let distanceToCurrent = MAX_NUMBER
+  let [distanceToCurrentX, distanceToCurrentY] = [MAX_DISTANCE, MAX_DISTANCE]
 
-  allCells.forEach((cell:CellType) => {
+  const getCellHandler = (isViewport:boolean) => (cell:ElementProps|ViewportProps) => {
     if (selectedCells.includes(cell)) return
     const { x, y, w, h } = cell
     const [cLeft, cTop, cRight, cBottom, cCenterX, cCenterY] = [x, y, x + w, y + h, x + (w / 2), y + (h / 2)]
     const getLine = judgementGetter(getGetLine([cLeft, cTop, cRight, cBottom]))
     if (directionX === 'L') {
       let lineData:any[]
-      lineData = getLine([cLeft, cCenterX, cRight], aRight, directionX)
-      lineData = getLine([cRight, cCenterX, cLeft], aLeft, directionX) || lineData
-      lineData = getLine([cRight, cLeft, cCenterX], aCenterX, directionX) || lineData
+      lineData = getLine([cLeft, cCenterX, cRight], aRight, directionX, isViewport)
+      lineData = getLine([cRight, cCenterX, cLeft], aLeft, directionX, isViewport) || lineData
+      lineData = getLine([cRight, cLeft, cCenterX], aCenterX, directionX, isViewport) || lineData
       if (lineData) {
         const [disL, disT] = [aLeft - cLeft, aTop - cTop]
         const distance = Math.sqrt((disL * disL) + (disT * disT))
-        if (distance < distanceToCurrent) {
-          distanceToCurrent = distance
+        if (distance < distanceToCurrentY) {
+          distanceToCurrentY = distance
           result[0] = lineData
         }
       }
     }
     if (directionX === 'R') {
       let lineData:any[]
-      lineData = getLine([cRight, cCenterX, cLeft], aLeft, directionX)
-      lineData = getLine([cLeft, cCenterX, cRight], aRight, directionX) || lineData
-      lineData = getLine([cLeft, cRight, cCenterX], aCenterX, directionX) || lineData
+      lineData = getLine([cRight, cCenterX, cLeft], aLeft, directionX, isViewport)
+      lineData = getLine([cLeft, cCenterX, cRight], aRight, directionX, isViewport) || lineData
+      lineData = getLine([cLeft, cRight, cCenterX], aCenterX, directionX, isViewport) || lineData
       if (lineData) {
         const [disL, disT] = [aLeft - cLeft, aTop - cTop]
         const distance = Math.sqrt((disL * disL) + (disT * disT))
-        if (distance < distanceToCurrent) {
-          distanceToCurrent = distance
+        if (distance < distanceToCurrentY) {
+          distanceToCurrentY = distance
           result[0] = lineData
         }
       }
     }
     if (directionY === 'T') {
       let lineData:any[]
-      lineData = getLine([cTop, cCenterY, cBottom], aBottom, directionY)
-      lineData = getLine([cBottom, cCenterY, cTop], aTop, directionY) || lineData
-      lineData = getLine([cBottom, cTop, cCenterY], aCenterY, directionY) || lineData
+      lineData = getLine([cTop, cCenterY, cBottom], aBottom, directionY, isViewport)
+      lineData = getLine([cBottom, cCenterY, cTop], aTop, directionY, isViewport) || lineData
+      lineData = getLine([cBottom, cTop, cCenterY], aCenterY, directionY, isViewport) || lineData
       if (lineData) {
         const [disL, disT] = [aLeft - cLeft, aTop - cTop]
         const distance = Math.sqrt((disL * disL) + (disT * disT))
-        if (distance < distanceToCurrent) {
-          distanceToCurrent = distance
+        if (distance < distanceToCurrentX) {
+          distanceToCurrentX = distance
           result[1] = lineData
         }
       }
     }
     if (directionY === 'B') {
       let lineData:any[]
-      lineData = getLine([cBottom, cCenterY, cTop], aTop, directionY)
-      lineData = getLine([cTop, cCenterY, cBottom], aBottom, directionY) || lineData
-      lineData = getLine([cTop, cBottom, cCenterY], aCenterY, directionY) || lineData
+      lineData = getLine([cBottom, cCenterY, cTop], aTop, directionY, isViewport)
+      lineData = getLine([cTop, cCenterY, cBottom], aBottom, directionY, isViewport) || lineData
+      lineData = getLine([cTop, cBottom, cCenterY], aCenterY, directionY, isViewport) || lineData
       if (lineData) {
         const [disL, disT] = [aLeft - cLeft, aTop - cTop]
         const distance = Math.sqrt((disL * disL) + (disT * disT))
-        if (distance < distanceToCurrent) {
-          distanceToCurrent = distance
+        if (distance < distanceToCurrentX) {
+          distanceToCurrentX = distance
           result[1] = lineData
         }
       }
     }
-  })
+  }
+
+  allElements.forEach(getCellHandler(false))
+  allViewports.forEach(getCellHandler(true))
 
   return result
 }
 
 // @TODO 还没想好dispatcher怎么用
 export default function ({
-  allCells, selectedCells, editorH, editorW, visible, dispatcher,
-}: GuideLinePropsType) {
+  cellsState, visible, dispatcher,
+}: GuideLineProps) {
 
   const oldActiveCoordinate = useRef<ActiveCoordinateType>()
 
   const activeCoordinate = (() => {
-    if (!selectedCells || !selectedCells.length) {
+    if (!cellsState.selectedElements || !cellsState.selectedElements.length) {
       return [0, 0, 0, 0]
     }
     let [minX, minY, maxX, maxY] = [MAX_NUMBER, MAX_NUMBER, 0 , 0]
-    selectedCells.forEach((cell:CellType) => {
+    cellsState.selectedElements.forEach((cell:ElementProps) => {
       if (cell.x < minX) minX = cell.x
       if (cell.y < minY) minY = cell.y
       if ((cell.x + cell.w) > maxX) maxX = cell.x + cell.w
@@ -182,30 +187,10 @@ export default function ({
     const linesData = doGuide(
       oldActiveCoordinate.current,
       activeCoordinate,
-      allCells,
-      selectedCells,
+      cellsState.allElements || [],
+      cellsState.allViewports || [],
+      cellsState.selectedElements,
     )
-
-    // 获取中心标线
-    const [aLeft, aTop, aRight, aBottom] = activeCoordinate
-    const [aCenterX, aCenterY] = [(aLeft + aRight) / 2, (aTop + aBottom) / 2]
-    const [eCenterX, eCenterY] = [editorW / 2, editorH / 2]
-    if (Math.abs(aCenterX - eCenterX) < MIN_DISTANCE) {
-      linesData[0] = {
-        type: 'y',
-        data: [aCenterX, eCenterX],
-        size: editorH,
-        position: 0,
-      }
-    }
-    if (Math.abs(aCenterY - eCenterY) < MIN_DISTANCE) {
-      linesData[1] = {
-        type: 'x',
-        data: [aCenterY, eCenterY],
-        size: editorW,
-        position: 0,
-      }
-    }
 
     const moveData:number[] = [0, 0]
     if (activeCoordinate.length === 4 && oldActiveCoordinate.current && oldActiveCoordinate.current.length === 4) {
@@ -229,7 +214,8 @@ export default function ({
       dispatcher([{
         type: 'move',
         payload: {
-          data: moveData,
+          tag: ELEMENT,
+          data: { move: moveData },
         },
       }])
       const [lineDataY, lineDataX] = linesData
@@ -238,13 +224,13 @@ export default function ({
         lines[0] = (
           <div
             style={{ height: lineDataY.size, top: lineDataY.position, left: lineDataY.data[1] }}
-            className="guideline-y-a"
+            className={`guideline-y-a${lineDataY.tag === VIEWPORT ?  '-v' : ''}`}
           />
         )
         lines[1] = (
           <div
             style={{ height: lineDataY.size, top: lineDataY.position, left: lineDataY.data[1] }}
-            className="guideline-y-c"
+            className={`guideline-y-c${lineDataY.tag === VIEWPORT ?  '-v' : ''}`}
           />
         )
       }
@@ -252,13 +238,13 @@ export default function ({
         lines[2] = (
           <div
             style={{ width: lineDataX.size, left: lineDataX.position, top: lineDataX.data[1] }}
-            className="guideline-x-a"
+            className={`guideline-x-a${lineDataX.tag === VIEWPORT ?  '-v' : ''}`}
           />
         )
         lines[3] = (
           <div
             style={{ width: lineDataX.size, left: lineDataX.position, top: lineDataX.data[1] }}
-            className="guideline-x-c"
+            className={`guideline-x-c${lineDataX.tag === VIEWPORT ?  '-v' : ''}`}
           />
         )
       }
@@ -267,16 +253,36 @@ export default function ({
 
     const lines:any[] = []
     linesData.forEach((lineData: LineDataType) => {
-      const { type, data, size, position } = lineData
+      const { type, data, size, position, tag } = lineData
       if (type === 'y') {
-        lines[0] = (<div style={{ height: size, top: position, left: data[0] }} className="guideline-y-a" />)
-        lines[1] = (<div style={{ height: size, top: position, left: data[1] }} className="guideline-y-c" />)
+        lines[0] = (
+          <div
+            style={{ height: size, top: position, left: data[0] }}
+            className={`guideline-y-a${tag === VIEWPORT ?  '-v' : ''}`}
+          />
+        )
+        lines[1] = (
+          <div
+            style={{ height: size, top: position, left: data[1] }}
+            className={`guideline-y-c${tag === VIEWPORT ?  '-v' : ''}`}
+          />
+        )
       }
       if (type === 'x') {
-        lines[2] = (<div style={{ width: size, left: position, top: data[0] }} className="guideline-x-a" />)
-        lines[3] = (<div style={{ width: size, left: position, top: data[1] }} className="guideline-x-c" />)
+        lines[2] = (
+          <div
+            style={{ width: size, left: position, top: data[0] }}
+            className={`guideline-x-a${tag === VIEWPORT ?  '-v' : ''}`}
+          />
+        )
+        lines[3] = (
+          <div
+            style={{ width: size, left: position, top: data[1] }}
+            className={`guideline-x-c${tag === VIEWPORT ?  '-v' : ''}`}
+          />
+        )
       }
     })
     return lines
-  }, [activeCoordinate, allCells, selectedCells, editorH, editorW, visible])
+  }, [activeCoordinate, cellsState.allElements, cellsState.allViewports, cellsState.selectedElements, visible])
 }

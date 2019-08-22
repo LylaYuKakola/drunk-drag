@@ -3,15 +3,17 @@
  */
 
 import * as React from 'react'
-import { EditorType } from '../../typings'
-import useCells from '../../_commonParts/Cells'
-import useConstantState from '../../uses/useConstantState'
-import useGuider from '../../guider'
-import useShortcutKey from '../../_commonParts/ShortcutKey'
-import { getEditorId } from '../../util/guid'
-import useCellsReducer from '../../dispatcher'
-import * as tj from '../../util/typeJudgement'
-import useCommander from '../../commander'
+import { EditorProps } from '../typings'
+import useAllElements from '../uses/useAllElements'
+import useAllViewports from '../uses/useAllViewports'
+import useConstantState from '../uses/useConstantState'
+import useGuider from '../guider'
+import useShortcutKey from '../uses/useShortcutKey'
+import { getEditorId } from '../util/guid'
+import useCellsReducer from '../dispatcher'
+import * as tj from '../util/typeJudgement'
+import { ELEMENT, VIEWPORT } from '../util/constants'
+import useCommander from '../commander'
 import Timeout = NodeJS.Timeout
 
 const { useState, useRef, useEffect, useCallback } = React
@@ -22,12 +24,21 @@ type PositionType = number[]
  * 拖拽编辑面板组件
  * @param width 面板宽度
  * @param height 面板高度
- * @param cells 面板内容
+ * @param cells 元素们
+ * @param viewports 视窗们
  * @param onChange 拖拽完成之后执行回调
  * @param id 面板id
  * @param style 面板扩展样式
  */
-export default function editor({ width, height, cells, onChange, id, style }:EditorType) {
+export default function editor({
+  elements,
+  viewports,
+  height,
+  width,
+  style,
+  onChange,
+  id,
+}:EditorProps) {
 
   const editorId = useConstantState(getEditorId(id)) // id设置为常量
 
@@ -35,11 +46,12 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
   const startPosition = useRef<PositionType>()
   const resizeTag = useRef<string>('')
   const timeoutToHideGuideLines = useRef<Timeout>()
+  const cellTag = useRef<string>(ELEMENT)
 
   const [guideLinesVisible, setGuideLinesVisible] = useState<boolean>(false)
   const [isActiveEditor, setIsActiveEditor] = useState<boolean>(false)
 
-  const [cellsState, dispatchCellsState] = useCellsReducer(cells)
+  const [cellsState, dispatchCellsState] = useCellsReducer({ elements, viewports })
 
   const getTouchRelativePosition = useCallback((event) => {
     if (
@@ -58,6 +70,14 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
   }, [panelRef])
 
   useCommander(`editor-${editorId}`, cellsState, dispatchCellsState)
+
+  const handleKeyDown = useCallback((event) => {
+    if (event.key === 'Shift') cellTag.current = VIEWPORT
+  }, [])
+
+  const handleKeyUp = useCallback((event) => {
+    if (event.key === 'Shift') cellTag.current = ELEMENT
+  }, [])
 
   const handleClickOutside = useCallback((event:any) => {
     const path = event.path
@@ -80,7 +100,8 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
       dispatchCellsState([{
         type: 'click',
         payload: {
-          data: startPosition.current,
+          tag: cellTag.current,
+          data: { click: startPosition.current },
         },
       }])
     }
@@ -114,13 +135,17 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
       dispatchCellsState([{
         type: 'select',
         payload: {
-          keys: [id],
+          tag: cellTag.current,
+          ids: [id],
         },
       }, {
         type: 'resize',
         payload: {
-          direction,
-          data: [diffX, diffY],
+          tag: cellTag.current,
+          data: {
+            direction,
+            resize: [diffX, diffY],
+          },
         },
       }])
     } else {
@@ -128,7 +153,10 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
       dispatchCellsState([{
         type: 'move',
         payload: {
-          data: [diffX, diffY],
+          tag: cellTag.current,
+          data: {
+            move: [diffX, diffY],
+          },
         },
       }])
     }
@@ -151,14 +179,12 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
     resizeTag.current = ''
   }, [])
 
-  // cell的渲染
-  const cellDoms = useCells(cellsState)
+  const elementsDom = useAllElements(cellsState)
+  const viewportsDom = useAllViewports(cellsState)
 
   // 标线的渲染
   const guideLines = useGuider({
-    ...cellsState,
-    editorW: width,
-    editorH: height,
+    cellsState,
     visible: guideLinesVisible,
     dispatcher: dispatchCellsState,
   })
@@ -170,7 +196,7 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
   })
 
   useEffect(() => {
-    if (onChange && tj.isFunction(onChange)) onChange(cellsState.allCells)
+    if (onChange && tj.isFunction(onChange)) onChange(cellsState)
     if (timeoutToHideGuideLines.current) {
       clearTimeout(timeoutToHideGuideLines.current)
     }
@@ -181,10 +207,14 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keyup', handleKeyUp)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keyup', handleKeyUp)
     }
-  }, [])
+  }, [handleClickOutside])
 
   return (
     <div
@@ -201,7 +231,8 @@ export default function editor({ width, height, cells, onChange, id, style }:Edi
         position: 'relative',
       }}
     >
-      { cellDoms }
+      { elementsDom }
+      { viewportsDom }
       { guideLines }
     </div>
   )
