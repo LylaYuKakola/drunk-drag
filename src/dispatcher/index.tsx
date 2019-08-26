@@ -24,7 +24,7 @@ import {
   doLowest,
 } from './handlers'
 
-const { useReducer, useCallback } = React
+const { useReducer, useCallback, useRef, useEffect } = React
 interface Dispatcher {
   elements: ElementProps[],
   viewports: ViewportProps[],
@@ -98,6 +98,9 @@ export default function dispatcher({ elements, viewports }: Dispatcher):[any, an
     return currentState
   }, [])
 
+  const actionsQueue = useRef<ReducerAction[][]>([])
+  const animationFrameTimer = useRef<number>(0)
+
   const [state, dispatch] = useReducer(reducer, {
     allElements: elements || [],
     allViewports: viewports || [],
@@ -107,5 +110,39 @@ export default function dispatcher({ elements, viewports }: Dispatcher):[any, an
     loadedWithError: false, // @TODO 暂时没用 这个字段用来处理异步错误
   })
 
-  return [state, dispatch]
+  // 在此处进行 actionsQueue 的入栈操作
+  const dispatchWithActionsQueue = useCallback((actions:ReducerAction[]) => {
+    actionsQueue.current.push(actions)
+  }, [])
+
+  // @explain
+  // 真实的dispatch不对外暴露，而暴露的 dispatchWithActionsQueue
+  // dispatchWithActionsQueue 仅提供一个actions入栈的操作，具体由 requestAnimationFrame 循环执行
+  // requestAnimationFrame通过不断监听 actionsQueue，进行actions的合并执行，并清空 actionsQueue
+
+  // 执行函数
+  const run = useCallback(() => {
+    const aq = actionsQueue.current
+
+    // 执行actions并清空actions
+    if (aq && aq.length) {
+      const allActions:ReducerAction[] = []
+      aq.forEach((actions:ReducerAction[] = []) => allActions.push(...actions))
+      if (allActions.length > 0) {
+        dispatch(allActions)
+      }
+      actionsQueue.current = []
+    }
+
+    animationFrameTimer.current = requestAnimationFrame(run)
+  }, [dispatch])
+
+  useEffect(() => {
+    animationFrameTimer.current = requestAnimationFrame(run)
+    return () => {
+      clearTimeout(animationFrameTimer.current)
+    }
+  }, [])
+
+  return [state, dispatchWithActionsQueue]
 }
