@@ -4,7 +4,12 @@ import { CellsState } from '../typings'
 
 const { useMemo } = React
 
-export default function useCells(cellsState:CellsState, isViewer:boolean = false):any[] {
+export default function useCells(
+  cellsState:CellsState,
+  isViewer?:boolean,
+  commander?:Function,
+):any[] {
+
   return useMemo<any[]|null>(() => {
     const { allElements, selectedElements } = cellsState
     return allElements.map((element, index) => (

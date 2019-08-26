@@ -1,4 +1,8 @@
+import * as React from "react";
+
 export default {
+  width: 1000,
+  height: 800,
   elements: [{
     type: 'Text',
     x: 0,
@@ -11,8 +15,18 @@ export default {
     size: 35,
   }, {
     type: 'Text',
-    x: 0,
+    x: 400,
     y: 100,
+    w: 200,
+    h: 50,
+    id: 'e2',
+    word: '第二个Text',
+    align: 'center',
+    size: 35,
+  }, {
+    type: 'Text',
+    x: 900,
+    y: 200,
     w: 200,
     h: 50,
     id: 'e2',
@@ -29,13 +43,13 @@ export default {
     id: 'v1',
   }, {
     type: 'Text',
-    x: 400,
+    x: 330,
     y: 0,
     w: 300,
     h: 600,
   }, {
     type: 'Text',
-    x: 800,
+    x: 660,
     y: 0,
     w: 300,
     h: 600,

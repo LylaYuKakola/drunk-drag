@@ -14,3 +14,5 @@ export const MAX_DISTANCE = 1000
 
 export const ELEMENT = 'element'
 export const VIEWPORT = 'viewport'
+
+

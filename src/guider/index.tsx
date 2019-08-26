@@ -153,7 +153,6 @@ function doGuide(
   return result
 }
 
-// @TODO 还没想好dispatcher怎么用
 export default function ({
   cellsState, visible, dispatcher,
 }: GuideLineProps) {

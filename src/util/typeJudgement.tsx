@@ -8,3 +8,6 @@ export const isString = (arg:any):boolean => Object.prototype.toString.call(arg)
 export const isNull = (arg:any):boolean => Object.prototype.toString.call(arg) === '[object Null]'
 export const isUndefined = (arg:any):boolean => Object.prototype.toString.call(arg) === '[object Undefined]'
 export const isUsableNumber = (arg:any):boolean => !Number.isNaN(parseFloat(arg))
+export const isUsableAction = (arg:any):boolean => {
+  arg.type
+}

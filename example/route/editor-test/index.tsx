@@ -27,8 +27,6 @@ export default function () {
         <Editor
           {...config}
           id="001"
-          width={pageWidth}
-          height={pageHeight}
           style={{ backgroundColor: '#f3f1ef' }}
         />
       </div>

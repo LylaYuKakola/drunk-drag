@@ -7,6 +7,17 @@ export interface PlainObject {
   [key:string]: any,
 }
 
+export interface ReducerPayload {
+  tag: string, // 'element' | 'viewport', 必须的
+  ids?: string[], // 指定cell的ID进行操作 (不区分 element 和 viewport)
+  data?: any, // 操作的数据
+}
+
+export interface ReducerAction {
+  type: string,
+  payload?: ReducerPayload,
+}
+
 interface ElementAndViewportProps {
   w: number,
   h: number,
@@ -22,6 +33,7 @@ interface ElementAndViewportProps {
 
 export interface ElementProps extends ElementAndViewportProps {
   type?: string, // tag为'element'的时候，指定cell的内容
+  actions?: ReducerAction[],
 }
 
 export interface ViewportProps extends ElementAndViewportProps {
@@ -57,6 +69,7 @@ export interface ViewerProps {
   height: number,
   width: number,
   style: any,
+  noScroll?: boolean,
   onTrigger?: () => void, // @TODO 预留
   id?: string, // 不指定则从内部获取
 }
@@ -74,17 +87,6 @@ export interface GuideLineProps {
   cellsState: CellsState
   visible:boolean,
   dispatcher: any,
-}
-
-export interface ReducerPayload {
-  tag: string, // 'element' | 'viewport', 必须的
-  ids?: string[], // 指定cell的ID进行操作 (不区分 element 和 viewport)
-  data?: any, // 操作的数据
-}
-
-export interface ReducerAction {
-  type: string,
-  payload?: ReducerPayload,
 }
 
 export interface DrunkDrag {

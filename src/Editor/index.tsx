@@ -16,7 +16,7 @@ import { ELEMENT, VIEWPORT } from '../util/constants'
 import useCommander from '../commander'
 import Timeout = NodeJS.Timeout
 
-const { useState, useRef, useEffect, useCallback } = React
+const { useState, useRef, useEffect, useCallback, useMemo } = React
 
 type PositionType = number[]
 
@@ -48,11 +48,16 @@ export default function editor({
   const timeoutToHideGuideLines = useRef<Timeout>()
   const cellTag = useRef<string>(ELEMENT)
 
+  // 标线相关
   const [guideLinesVisible, setGuideLinesVisible] = useState<boolean>(false)
   const [isActiveEditor, setIsActiveEditor] = useState<boolean>(false)
 
+  // 展示的cell相关
   const [cellsState, dispatchCellsState] = useCellsReducer({ elements, viewports })
+  const elementsDom = useAllElements(cellsState)
+  const viewportsDom = useAllViewports(cellsState)
 
+  // 获取点击位置相对于panel的相对坐标
   const getTouchRelativePosition = useCallback((event) => {
     if (
       !panelRef.current ||
@@ -69,16 +74,20 @@ export default function editor({
     ]
   }, [panelRef])
 
+  // commander 的绑定
   useCommander(`editor-${editorId}`, cellsState, dispatchCellsState)
 
+  // keyDown （这里的keyDown只执行shift控制的切换到viewport的编辑状态）
   const handleKeyDown = useCallback((event) => {
     if (event.key === 'Shift') cellTag.current = VIEWPORT
   }, [])
 
+  // keyUp （这里的keyUp只执行shift控制的编辑viewport的状态恢复）
   const handleKeyUp = useCallback((event) => {
     if (event.key === 'Shift') cellTag.current = ELEMENT
   }, [])
 
+  // 清除drag状态
   const handleClickOutside = useCallback((event:any) => {
     const path = event.path
     if (!path || !path.length) {
@@ -89,6 +98,7 @@ export default function editor({
     }
   }, [editorId])
 
+  // drag start
   const handleDragStart = useCallback((event:any) => {
     // event.nativeEvent.stopImmediatePropagation()
     startPosition.current = getTouchRelativePosition(event)
@@ -179,15 +189,20 @@ export default function editor({
     resizeTag.current = ''
   }, [])
 
-  const elementsDom = useAllElements(cellsState)
-  const viewportsDom = useAllViewports(cellsState)
-
   // 标线的渲染
   const guideLines = useGuider({
     cellsState,
     visible: guideLinesVisible,
     dispatcher: dispatchCellsState,
   })
+
+  // 面板样式
+  const panelStyle = useMemo(() => ({
+    ...style,
+    width,
+    height,
+    position: 'relative',
+  }), [style, width, height])
 
   // side effect 快捷键
   useShortcutKey({
@@ -224,12 +239,7 @@ export default function editor({
       onMouseDown={handleDragStart}
       onTouchStart={handleDragStart}
       className="editor"
-      style={{
-        ...style,
-        width,
-        height,
-        position: 'relative',
-      }}
+      style={panelStyle}
     >
       { elementsDom }
       { viewportsDom }

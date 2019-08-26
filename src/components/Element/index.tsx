@@ -16,12 +16,15 @@ export default ({
   y,
   type,
   id,
+  actions,
+  commander,
   style,
   className,
   index,
   isSelected,
   isViewer,
 }:ElementProps) => {
+
   const content = useMemo<any|null>(() => {
     // element
     const component = contents[type]

@@ -54,7 +54,7 @@ const extraCommanderFilter = (extra:PlainObject = {}) => {
   const keys = Object.keys(extra)
   if (!keys.length) return result
   keys.forEach((key:string) => {
-    if (!tj.isFunction(extra[key])) result[key] = extra[key]
+    if (tj.isFunction(extra[key])) result[key] = extra[key]
   })
   return result
 }
@@ -183,4 +183,6 @@ export default function useCommander(componentId:string, cellsState:CellsState, 
       commanders.delete(componentId)
     }
   }, [componentId, commander])
+
+  return commander
 }
