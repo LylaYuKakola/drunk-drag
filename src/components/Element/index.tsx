@@ -17,7 +17,6 @@ export default ({
   type,
   id,
   actions,
-  commander,
   style,
   className,
   index,

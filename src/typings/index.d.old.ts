@@ -18,10 +18,7 @@ export interface ReducerAction {
   payload?: ReducerPayload,
 }
 
-// 在这里区分了element和viewport的输入配置和内部生成的组件porps
-
-// element viewport 公共配置
-interface ElementAndViewportConfig {
+interface ElementAndViewportProps {
   w: number,
   h: number,
   x: number,
@@ -29,30 +26,20 @@ interface ElementAndViewportConfig {
   id?: string, // 不指定则从内部获取
   style?: any,
   className?: string,
+  index?: number, // 内部获取
+  isSelected?: boolean, // 内部获取
+  isViewer?: boolean, // 内部获取
 }
 
-// element viewport 组件公共属性（全是内部获取）
-interface ElementAndViewportProps extends ElementAndViewportConfig{
-  index?: number,
-  isSelected?: boolean,
-  isViewer?: boolean,
-}
-
-// element的配置项
-export interface ElementConfig extends ElementAndViewportConfig {
-  type?: string, // element 指定cell的内容类型
+export interface ElementProps extends ElementAndViewportProps {
+  type?: string, // tag为'element'的时候，指定cell的内容
   actions?: ReducerAction[],
 }
-// viewport的配置项
-export interface ViewportConfig extends ElementAndViewportConfig {
-  shape?: string, // viewport 指定cell的形状 @TODO 预备，暂时不实现，默认矩形
-}
-// element的组件属性
-export interface ElementProps extends ElementAndViewportProps, ElementConfig {}
-// viewport的组件属性
-export interface ViewportProps extends ElementAndViewportProps, ViewportConfig {}
 
-// cell组件属性
+export interface ViewportProps extends ElementAndViewportProps {
+  shape?: string, // tag为'viewport'的时候，指定cell的形状 @TODO 预备，暂时不实现，默认矩形
+}
+
 export interface CellProps {
   w: number,
   h: number,
@@ -88,10 +75,12 @@ export interface ViewerProps {
 }
 
 export interface CellsState {
-  allElements: ElementConfig[],
-  allViewports: ViewportConfig[],
-  selectedElements: ElementConfig[],
-  selectedViewports: ViewportConfig[],
+  allElements: ElementProps[],
+  allViewports: ViewportProps[],
+  selectedElements: ElementProps[],
+  selectedViewports: ViewportProps[],
+  loading: boolean, // @TODO 暂时没用
+  loadedWithError: boolean, // @TODO 这个字段用来处理异步错误
 }
 
 export interface GuideLineProps {

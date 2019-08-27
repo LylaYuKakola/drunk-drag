@@ -3,7 +3,7 @@
  */
 
 import * as React from 'react'
-import { GuideLineProps, ElementProps, ViewportProps } from '../typings'
+import { GuideLineProps, ElementConfig, ViewportConfig } from '../typings'
 import { MIN_DISTANCE, MAX_DISTANCE, MAX_NUMBER, ELEMENT, VIEWPORT } from '../util/constants'
 import './index.scss'
 
@@ -64,9 +64,9 @@ const judgementGetter =
 function doGuide(
   oldCoordinate: ActiveCoordinateType,
   coordinate: ActiveCoordinateType,
-  allElements: ElementProps[],
-  allViewports: ViewportProps[],
-  selectedCells: ElementProps[],
+  allElements: ElementConfig[],
+  allViewports: ViewportConfig[],
+  selectedCells: ElementConfig[],
 ):any[] {
 
   if (!coordinate || !oldCoordinate || !allViewports || !selectedCells) return []
@@ -84,7 +84,7 @@ function doGuide(
   const getGetLine = getGetGetLine([aLeft, aTop, aRight, aBottom])
   let [distanceToCurrentX, distanceToCurrentY] = [MAX_DISTANCE, MAX_DISTANCE]
 
-  const getCellHandler = (isViewport:boolean) => (cell:ElementProps|ViewportProps) => {
+  const getCellHandler = (isViewport:boolean) => (cell:ElementConfig|ViewportConfig) => {
     if (selectedCells.includes(cell)) return
     const { x, y, w, h } = cell
     const [cLeft, cTop, cRight, cBottom, cCenterX, cCenterY] = [x, y, x + w, y + h, x + (w / 2), y + (h / 2)]
@@ -164,7 +164,7 @@ export default function ({
       return [0, 0, 0, 0]
     }
     let [minX, minY, maxX, maxY] = [MAX_NUMBER, MAX_NUMBER, 0 , 0]
-    cellsState.selectedElements.forEach((cell:ElementProps) => {
+    cellsState.selectedElements.forEach((cell:ElementConfig) => {
       if (cell.x < minX) minX = cell.x
       if (cell.y < minY) minY = cell.y
       if ((cell.x + cell.w) > maxX) maxX = cell.x + cell.w

@@ -5,6 +5,7 @@ import Editor from './Editor'
 import Viewer from './Viewer'
 import '../font/iconfont.css'
 import { warn } from './logger'
+import './polyfills/requestAnimationFrame'
 
 const register = (types:any) => {
   Object.keys(types).forEach((key:string) => {

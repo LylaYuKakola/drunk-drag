@@ -8,7 +8,7 @@
  */
 
 import * as React from 'react'
-import { ElementProps, ViewportProps, ReducerAction, CellsState } from '../typings'
+import { ElementConfig, ViewportConfig, ReducerAction, CellsState } from '../typings'
 import {
   doUpdate,
   doClick,
@@ -26,8 +26,8 @@ import {
 
 const { useReducer, useCallback, useRef, useEffect } = React
 interface Dispatcher {
-  elements: ElementProps[],
-  viewports: ViewportProps[],
+  elements: ElementConfig[],
+  viewports: ViewportConfig[],
 }
 
 /**
@@ -106,8 +106,6 @@ export default function dispatcher({ elements, viewports }: Dispatcher):[any, an
     allViewports: viewports || [],
     selectedElements: [],
     selectedViewports: [],
-    loading: false, // @TODO 暂时没用
-    loadedWithError: false, // @TODO 暂时没用 这个字段用来处理异步错误
   })
 
   // 在此处进行 actionsQueue 的入栈操作

@@ -3,7 +3,7 @@
  */
 
 import * as React from 'react'
-import { ViewerProps, ViewportProps } from '../typings'
+import { ViewerProps, ViewportConfig } from '../typings'
 import useAllElements from '../uses/useAllElements'
 import useAllViewports from '../uses/useAllViewports'
 import useConstantState from '../uses/useConstantState'
@@ -56,7 +56,7 @@ export default function viewer({
 
   // 面板样式
   const panelStyle = useMemo(() => {
-    const viewports:ViewportProps[] = cellsState.allViewports
+    const viewports:ViewportConfig[] = cellsState.allViewports
     const finalStyle = {
       ...style,
       width,
