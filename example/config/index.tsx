@@ -1,5 +1,3 @@
-import * as React from "react";
-
 export default {
   width: 1000,
   height: 800,

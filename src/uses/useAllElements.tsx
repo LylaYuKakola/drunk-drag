@@ -1,18 +1,21 @@
 import * as React from 'react'
 import Element from '../components/Element'
 import { CellsState } from '../typings'
+import { getCellId } from '../util/guid'
 
 const { useMemo } = React
 
 export default function useCells(
   cellsState:CellsState,
   isViewer?:boolean,
-  commander?:Function,
 ):any[] {
 
   return useMemo<any[]|null>(() => {
     const { allElements, selectedElements } = cellsState
-    return allElements.map((element, index) => (
+    return allElements.map((e) => {
+      e.id = getCellId(e.id)
+      return e
+    }).map((element, index) => (
       <Element
         {...element}
         isSelected={selectedElements && selectedElements.includes(element)}
